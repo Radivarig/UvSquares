@@ -6,7 +6,7 @@ bl_info = {
     "name": "Uv Squares",
     "description": "Reshapes UV faces to a grid of equivalent squares",
     "author": "Reslav Hollos",
-    "version": (1, 0),
+    "version": (1, 0, 1),
     "blender": (2, 7, 0),
     "category": "Mesh"
     #"location": "UV Image Editor > UVs > UVs to grid of squares", 
@@ -725,37 +725,45 @@ def FetchVerts(uv_layer, bm):
 #    
 #    return verts
 
-def FetchCorners(uv_layer, bm, selVerts):   
+def CountQuasiEqualVectors(v, list):
+    i=0
+    for e in list:
+        if AreVectorsQuasiEqual(v,e):
+            i=i+1
+    return i
+
+def FetchCorners(uv_layer, bm, selVerts):
     #this doesn't work for UV selection
     #for selV in reversed(bm.select_history):
     #   if isinstance(selV, bmesh.types.BMVert):
     #       lastSelV = selV
     #       break
     
+    if len(selVerts) is 0:
+        print("--error: nothing is selected.")
+        return None, None, None, None
+   
+    #corners.append(filter by vectors that share location)
     corners = []
+    [corners.append(v) for v in selVerts if CountQuasiEqualVectors(v, corners) is 0]
     
-    #we remove doubles
-    for v in selVerts:
-        if v not in corners:
-            corners.append(v)
-    
+    #if there are only 4 "click selected" vertices (corners is here holder for filtered selVerts) 
     if len(corners) is 4:
-        print("")
         selVerts[:] = []
         selVerts.extend(corners)
         
-    else: corners = []
-        
-    verts = FetchVerts(uv_layer, bm)
-        
-    for v in verts:
-        if len(verts[v]) is 1:
-            corners.append(verts[v][0])
+    else:
+        corners = []
+        verts = FetchVerts(uv_layer, bm)
             
-    if len(corners) is not 4:
-        print(len(corners), "corners found, 4 required")
-        return None, None, None, None
-    
+        for v in verts:
+            if len(verts[v]) is 1:
+                corners.append(verts[v][0])
+         
+        if len(corners) is not 4:
+            print(len(corners), "corners found, 4 required")
+            return None, None, None, None
+        
     firstHighest = corners[0]
     for c in corners:
         if c.y > firstHighest.y:
@@ -872,7 +880,7 @@ def register():
     #handle the keymap
     wm = bpy.context.window_manager
     km = wm.keyconfigs.addon.keymaps.new(name='Edit Mode', space_type='IMAGE_EDITOR')
-    kmi = km.keymap_items.new(UvSquares.bl_idname, 'E', 'PRESS', alt=True)
+    kmi = km.keymap_items.new(UvSquares.bl_idname, 'S', 'PRESS', alt=True)
     addon_keymaps.append(km)
 
 def unregister():
