@@ -6,7 +6,7 @@ bl_info = {
     "name": "Uv Squares",
     "description": "Reshapes UV faces to a grid of equivalent squares",
     "author": "Reslav Hollos",
-    "version": (1, 0, 1),
+    "version": (1, 0, 2),
     "blender": (2, 7, 0),
     "category": "Mesh"
     #"location": "UV Image Editor > UVs > UVs to grid of squares", 
@@ -879,8 +879,8 @@ def register():
 
     #handle the keymap
     wm = bpy.context.window_manager
-    km = wm.keyconfigs.addon.keymaps.new(name='Edit Mode', space_type='IMAGE_EDITOR')
-    kmi = km.keymap_items.new(UvSquares.bl_idname, 'S', 'PRESS', alt=True)
+    km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
+    kmi = km.keymap_items.new(UvSquares.bl_idname, 'E', 'PRESS', alt=True)
     addon_keymaps.append(km)
 
 def unregister():
@@ -898,3 +898,4 @@ if __name__ == "__main__":
 
     # test call
     bpy.ops.uv.uv_squares()
+
