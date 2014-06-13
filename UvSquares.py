@@ -2,7 +2,6 @@
 #    Copyright (C) <2014>  <Reslav Hollos>
 #    This work is under the MIT License (MIT), see LICENSE file.
 
-
 bl_info = {
     "name": "Uv Squares",
     "description": "Reshapes UV faces to a grid of equivalent squares",
@@ -33,27 +32,30 @@ def main(context):
     
     selVerts = ListOfSelVerts(uv_layer, bm)  #remember selected verts so we can reselect at end
     
-    leftUpCornerV, leftDownCornerV, rightUpCornerV, rightDownCornerV = FetchCorners(uv_layer, bm)
+    leftUpCornerV, leftDownCornerV, rightUpCornerV, rightDownCornerV = FetchCorners(uv_layer, bm, selVerts)
     if leftUpCornerV is None:      #we don't need to check for others since they are all None
         print("--error: number of corners is not 4, faces might not be rectangles")
         return
     else:
         print("success! matched 4 corners")
         
-    leftUpCornerF, leftDownCornerF, rightUpCornerF, rightDownCornerF = FetchCornerFaces(uv_layer, bm, leftUpCornerV, leftDownCornerV, rightUpCornerV, rightDownCornerV)
-    if leftUpCornerF is None or leftDownCornerF is None or rightUpCornerF is None or rightDownCornerF is None:
-        print("--error: corner face might not be a rectangle")
-        return
-    else:
-        print("success! recognized 4 corner faces")
+    if len(selVerts) is 4:
+        leftUpCornerUvF, leftDownCornerUvF, rightUpCornerUvF, rightDownCornerUvF = MakeCornerUvFacesFrom4Corners(leftUpCornerV, leftDownCornerV, rightUpCornerV, rightDownCornerV)
+    else:        
+        leftUpCornerF, leftDownCornerF, rightUpCornerF, rightDownCornerF = FetchCornerFaces(uv_layer, bm, leftUpCornerV, leftDownCornerV, rightUpCornerV, rightDownCornerV)
+        if leftUpCornerF is None or leftDownCornerF is None or rightUpCornerF is None or rightDownCornerF is None:
+            print("--error: corner face might not be a rectangle")
+            return
+        else:
+            print("success! recognized 4 corner faces")
     
-    leftUpCornerUvF, leftDownCornerUvF, rightUpCornerUvF, rightDownCornerUvF = MakeCornerUvFaces(uv_layer, bm, leftUpCornerF, leftDownCornerF, rightUpCornerF, rightDownCornerF, leftUpCornerV, leftDownCornerV, rightUpCornerV, rightDownCornerV)                                                                                          
-    if leftUpCornerUvF is None or leftDownCornerUvF is None or rightUpCornerUvF is None or rightDownCornerUvF is None:
-        print("--error: couldn't determine corners of given corner face")
-        return
-    else:
-        print("success! corners of all 4 corner faces recognized")
-    
+        leftUpCornerUvF, leftDownCornerUvF, rightUpCornerUvF, rightDownCornerUvF = MakeCornerUvFaces(uv_layer, bm, leftUpCornerF, leftDownCornerF, rightUpCornerF, rightDownCornerF, leftUpCornerV, leftDownCornerV, rightUpCornerV, rightDownCornerV)                                                                                          
+        if leftUpCornerUvF is None or leftDownCornerUvF is None or rightUpCornerUvF is None or rightDownCornerUvF is None:
+            print("--error: couldn't determine corners of given corner face")
+            return
+        else:
+            print("success! corners of all 4 corner faces recognized")
+        
     array2dOfVerts = Build2DimArrayOfUvFaces(uv_layer, bm, leftUpCornerUvF, leftDownCornerUvF, rightUpCornerUvF, rightDownCornerUvF)
     if array2dOfVerts is None:
         print("--error: not all faces were recognized, add more distance between close vertices")
@@ -67,7 +69,26 @@ def main(context):
     bmesh.update_edit_mesh(me)
     print("success! UvSquares script finnished.")
     return
-    
+ 
+#def FilterDoubles(listVerts):
+#    noDoubles = []
+#    for v in listVerts:
+#        if v not in noDoubles:
+#            noDoubles.append(v)
+#    return noDoubles
+   
+def MakeCornerUvFacesFrom4Corners(leftUpCornerV, leftDownCornerV, rightUpCornerV, rightDownCornerV):
+    face = UvFace()
+    face.leftUpVert = leftUpCornerV
+    face.leftDownVert = leftDownCornerV
+    face.rightUpVert = rightUpCornerV
+    face.rightDownVert = rightDownCornerV
+    a = face
+    b = face
+    c = face
+    d = face
+    return a,b,c,d
+
 def MakeUvFacesEqualRectangles(uv_layer, bm, array2dOfVerts, leftUpCornerV, rightUpCornerV):
     rowNumber = len(array2dOfVerts) +1   #number of faces +1 equals number of rows, same for column
     colNumber = len(array2dOfVerts[0]) +1
@@ -675,6 +696,7 @@ def RotateSelected(angle):
 
 
 def FetchVerts(uv_layer, bm):
+   
     verts = defaultdict(list)                #dict
     for face in bm.faces:
         isFaceSel = True
@@ -703,14 +725,28 @@ def FetchVerts(uv_layer, bm):
 #    
 #    return verts
 
-def FetchCorners(uv_layer, bm):   
+def FetchCorners(uv_layer, bm, selVerts):   
     #this doesn't work for UV selection
     #for selV in reversed(bm.select_history):
     #   if isinstance(selV, bmesh.types.BMVert):
     #       lastSelV = selV
     #       break
-    verts = FetchVerts(uv_layer, bm)
+    
     corners = []
+    
+    #we remove doubles
+    for v in selVerts:
+        if v not in corners:
+            corners.append(v)
+    
+    if len(corners) is 4:
+        print("")
+        selVerts[:] = []
+        selVerts.extend(corners)
+        
+    else: corners = []
+        
+    verts = FetchVerts(uv_layer, bm)
         
     for v in verts:
         if len(verts[v]) is 1:
@@ -748,7 +784,8 @@ def FetchCorners(uv_layer, bm):
     else:
         leftDown = secondLowest
         rightDown = firstLowest
-        
+    
+    #print(leftUp, leftDown, rightUp, rightDown)
     return leftUp, leftDown, rightUp, rightDown
 
 def FetchCornerFaces(uv_layer, bm, leftUpV, leftDownV, rightUpV, rightDownV):   
