@@ -18,6 +18,7 @@ import bpy
 import bmesh
 from collections import defaultdict  
 from math import radians
+import time
 
 #known_issue: if loop cut was used, mesh has to be unwrapped again'
 
@@ -26,6 +27,8 @@ def main(context):
     me = obj.data
     bm = bmesh.from_edit_mesh(me)
 
+    startTime = time.clock()
+    
     uv_layer = bm.loops.layers.uv.verify()
     bm.faces.layers.tex.verify()  # currently blender needs both layers.
     
@@ -67,6 +70,9 @@ def main(context):
     SelectVerts(uv_layer, bm, selVerts)
     bmesh.update_edit_mesh(me)
     print("success! UvSquares script finnished.")
+    
+    print("time taken", time.clock() - startTime)
+    
     return
    
 def MakeCornerUvFacesFrom4Corners(leftUpCornerV, leftDownCornerV, rightUpCornerV, rightDownCornerV):
