@@ -19,7 +19,6 @@ import bmesh
 from collections import defaultdict  
 from math import radians
 
-#known_issue: keyboard shortcut not working in 'IMAGE_EDITOR'
 #known_issue: if loop cut was used, mesh has to be unwrapped again'
 
 def main(context):
@@ -69,13 +68,6 @@ def main(context):
     bmesh.update_edit_mesh(me)
     print("success! UvSquares script finnished.")
     return
- 
-#def FilterDoubles(listVerts):
-#    noDoubles = []
-#    for v in listVerts:
-#        if v not in noDoubles:
-#            noDoubles.append(v)
-#    return noDoubles
    
 def MakeCornerUvFacesFrom4Corners(leftUpCornerV, leftDownCornerV, rightUpCornerV, rightDownCornerV):
     face = UvFace()
