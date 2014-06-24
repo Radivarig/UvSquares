@@ -939,7 +939,7 @@ def CursorClosestTo(verts, allowedError = 0.05):
     for a in bpy.context.screen.areas:
         if a.type == 'IMAGE_EDITOR':
             img = a.spaces[0].image
-            if img is not None:
+            if img is not None and img.size[0] is not 0:
                 ratioX, ratioY = img.size[0], img.size[1]
             break
     
@@ -1218,4 +1218,5 @@ def unregister():
 if __name__ == "__main__":
     register()
     
+
 
