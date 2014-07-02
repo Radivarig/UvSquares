@@ -58,21 +58,18 @@ def main1(context, callsNo = 0):
     
     lucv, ldcv, rucv, rdcv = Corners(selVerts, filteredVerts[:], selFaces, vertsDict)      #left up corner vert, ...
     
-    if AreVectsLinedOnAxis(filteredVerts) is False:
-        cursorClosestTo = CursorClosestTo(selVerts)
-        print(cursorClosestTo)
+    cursorClosestTo = CursorClosestTo(selVerts)
+    if len(selFaces) is 0:
         VertsDictForLine(uv_layer, bm, selVerts, vertsDict)
-        ScaleTo0OnAxisAndCursor(filteredVerts, vertsDict, cursorClosestTo)
-        #return SuccessFinished(me, startTime)
-    
-    
-    else if len(selFaces) is 0 and len(filteredVerts) is not 4 or len(selFaces) is 0 and len(filteredVerts) is 4 and AreVectsLinedOnAxis(filteredVerts):
-        cursorClosestTo = CursorClosestTo(selVerts)
         
-        VertsDictForLine(uv_layer, bm, selVerts, vertsDict)
-        ScaleTo0OnAxisAndCursor(filteredVerts, vertsDict, cursorClosestTo)    
+        if AreVectsLinedOnAxis(filteredVerts) is False:
+            ScaleTo0OnAxisAndCursor(filteredVerts, vertsDict, cursorClosestTo)
+            return SuccessFinished(me, startTime)
         
-        return SuccessFinished(me, startTime)
+        else:
+            MakeEqualDistanceBetweenVertsInLine(filteredVerts, vertsDict, cursorClosestTo)
+            return SuccessFinished(me, startTime)    
+       
     else:
         corners = [lucv, ldcv, rucv, rdcv]
         cursorClosestTo = CursorClosestTo(corners)
