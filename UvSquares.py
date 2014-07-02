@@ -8,7 +8,7 @@ bl_info = {
     "aligns vertices on axis with equal vertex distance, "
     "rips/joins faces.",
     "author": "Reslav Hollos",
-    "version": (1, 1, 0),
+    "version": (1, 2, 0),
     "blender": (2, 7, 1),
     "category": "Mesh"
     #"location": "UV Image Editor > UVs > UVs to grid of squares",
@@ -1276,5 +1276,6 @@ def unregister():
 if __name__ == "__main__":
     register()
     
+
 
 
