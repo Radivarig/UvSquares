@@ -58,11 +58,19 @@ def main1(context, callsNo = 0):
     
     lucv, ldcv, rucv, rdcv = Corners(selVerts, filteredVerts[:], selFaces, vertsDict)      #left up corner vert, ...
     
-    if len(selFaces) is 0 and len(filteredVerts) is not 4 or len(selFaces) is 0 and len(filteredVerts) is 4 and AreVectsLinedOnAxis(filteredVerts):
+    if AreVectsLinedOnAxis(filteredVerts) is False:
+        cursorClosestTo = CursorClosestTo(selVerts)
+        print(cursorClosestTo)
+        VertsDictForLine(uv_layer, bm, selVerts, vertsDict)
+        ScaleTo0OnAxisAndCursor(filteredVerts, vertsDict, cursorClosestTo)
+        #return SuccessFinished(me, startTime)
+    
+    
+    else if len(selFaces) is 0 and len(filteredVerts) is not 4 or len(selFaces) is 0 and len(filteredVerts) is 4 and AreVectsLinedOnAxis(filteredVerts):
         cursorClosestTo = CursorClosestTo(selVerts)
         
         VertsDictForLine(uv_layer, bm, selVerts, vertsDict)
-        MakeEqualDistanceBetweenVertsInLine(filteredVerts, vertsDict, cursorClosestTo)    
+        ScaleTo0OnAxisAndCursor(filteredVerts, vertsDict, cursorClosestTo)    
         
         return SuccessFinished(me, startTime)
     else:
@@ -283,6 +291,59 @@ def VertsDictForLine(uv_layer, bm, selVerts, vertsDict):
                     y = round(luv.uv.y, precision)
          
                     vertsDict[(x, y)].append(luv)
+    return
+def ScaleTo0OnAxisAndCursor(filteredVerts, vertsDict, startv = None):      
+    verts = filteredVerts
+    verts.sort(key=lambda x: x[0])      #sort by .x
+    
+    first = verts[0]
+    last = verts[len(verts)-1]
+    
+    horizontal = True
+    if ((last.x - first.x) >0.0001):
+        slope = (last.y - first.y)/(last.x - first.x)
+        if (slope > 1) or (slope <-1):
+            horizontal = False 
+    else: 
+        horizontal = False
+    
+    if horizontal is True:
+        if startv is None:
+            startv = first  
+        
+        SetAll2dCursorsTo(startv.x, startv.y)
+        #scale to 0 on Y
+        ScaleTo0('Y')
+        return
+       
+    else:
+        verts.sort(key=lambda x: x[1])  #sort by .y
+        verts.reverse()     #reverse because y values drop from up to down
+        first = verts[0]
+        last = verts[len(verts)-1]
+        if startv is None:
+            startv = first  
+
+        SetAll2dCursorsTo(startv.x, startv.y)
+        #scale to 0 on X
+        ScaleTo0('X')
+        return
+    
+def ScaleTo0(axis):
+    last_area = bpy.context.area.type
+    bpy.context.area.type = 'IMAGE_EDITOR'
+    last_pivot = bpy.context.space_data.pivot_point
+    bpy.context.space_data.pivot_point = 'CURSOR'
+    
+    for area in bpy.context.screen.areas:
+        if area.type == 'IMAGE_EDITOR':
+            if axis is 'Y':
+                bpy.ops.transform.resize(value=(1, 0, 1), constraint_axis=(False, True, False), constraint_orientation='GLOBAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
+            else:
+                bpy.ops.transform.resize(value=(0, 1, 1), constraint_axis=(True, False, False), constraint_orientation='GLOBAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
+                
+
+    bpy.context.space_data.pivot_point = last_pivot
     return
 
 def MakeUvFacesEqualRectangles(uv_layer, vertsDict, edgeFaces, array2dOfVerts, lucv, ldcv, rucv, rdcv, startv):
