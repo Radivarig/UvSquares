@@ -8,7 +8,7 @@ bl_info = {
     "aligns vertices on axis with equal vertex distance, "
     "rips/joins faces.",
     "author": "Reslav Hollos",
-    "version": (1, 2, 0),
+    "version": (1, 2, 1),
     "blender": (2, 7, 1),
     "category": "Mesh"
     #"location": "UV Image Editor > UVs > UVs to grid of squares",
@@ -53,8 +53,12 @@ def main1(context, callsNo = 0):
  
     selVerts, filteredVerts, selFaces, edgeFaces, vertsDict= ListsOfVerts(uv_layer, bm, startTime, allowedTime)  #remember selected verts so we can reselect at end
     
-    if len(filteredVerts) < 2:
-        return ErrorFinished("select at least 2 vertices.")
+    if len(filteredVerts) is 0:
+        return 
+    
+    if len(filteredVerts) is 1:
+        SetAll2dCursorsTo(selVerts[0].x, selVerts[0].y)
+        return SuccessFinished(me, startTime)
     
     lucv, ldcv, rucv, rdcv = Corners(selVerts, filteredVerts[:], selFaces, vertsDict)      #left up corner vert, ...
     
