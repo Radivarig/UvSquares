@@ -992,7 +992,7 @@ def SetRestOfFaceBy2Corners(face, verts, side):
             face.rightDownVert = temp
     return
  
-def CursorClosestTo(verts, allowedError = 0.05):
+def CursorClosestTo(verts, allowedError = 0.025):
     ratioX, ratioY = 255, 255
     for a in bpy.context.screen.areas:
         if a.type == 'IMAGE_EDITOR':
