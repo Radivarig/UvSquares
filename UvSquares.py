@@ -8,8 +8,8 @@ bl_info = {
     "aligns vertices on axis with equal vertex distance, "
     "rips/joins faces.",
     "author": "Reslav Hollos",
-    "version": (1, 2, 1),
-    "blender": (2, 7, 1),
+    "version": (1, 2, 2),
+    "blender": (2, 71, 0),
     "category": "Mesh"
     #"location": "UV Image Editor > UVs > UVs to grid of squares",
     #"warning": "",
@@ -148,6 +148,7 @@ def ErrorFinished(message = ""):
 
 def SuccessFinished(me, startTime):
     bmesh.update_edit_mesh(me)
+    bpy.ops.ed.undo_push()
     print("Success! UvSquares has finished, elapsed time:",round(time.clock()-startTime, 2),"s.")
     return
 
