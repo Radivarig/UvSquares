@@ -8,7 +8,7 @@ bl_info = {
     "aligns vertices on axis with equal vertex distance, "
     "rips/joins faces.",
     "author": "Reslav Hollos",
-    "version": (1, 2, 2),
+    "version": (1, 2, 3),
     "blender": (2, 71, 0),
     "category": "Mesh"
     #"location": "UV Image Editor > UVs > UVs to grid of squares",
@@ -1228,7 +1228,54 @@ def menu_func_sym_uv_squares(self, context): self.layout.operator(SymUvSquares.b
 def menu_func_face_rip(self, context): self.layout.operator(RipFaces.bl_idname)
 def menu_func_face_join(self, context): self.layout.operator(JoinFaces.bl_idname)
     
+class UvSquaresPanel(bpy.types.Panel):
+    """UvSquares Panel"""
+    bl_label = "UV Squares"
+    bl_space_type = 'IMAGE_EDITOR'
+    bl_region_type = 'TOOLS'
+
+    def draw(self, context):
+        layout = self.layout
+
+        row = layout.row()
+        row.label(text="Select One Vertex to:")
+        split = layout.split()
+        col = split.column(align=True)
+        col.operator(UvSquares.bl_idname, text="Snap Cursor to Vertex", )
+        
+        row = layout.row()
+        row.label(text="Select Sequenced Vertices to:")
+        split = layout.split()
+        col = split.column(align=True)
+        col.operator(UvSquares.bl_idname, text="Snap to Axis", )
+        col.operator(UvSquares.bl_idname, text="Snap and Make Equally Distanced (press twice)", )
+        
+        row = layout.row()
+        row.label(text="Select Potential Rectangle (4 corners) ")
+        split = layout.split()
+        col = split.column(align=True)
+        col.operator(UvSquares.bl_idname, text="Convert To Grid", icon = "UV_FACESEL")
+        
+        row = layout.row()
+        row.label(text="Select Only Faces to:")
+        split = layout.split()
+        col = split.column(align=True)
+        col.operator(UvSquares.bl_idname, text="Rip/Separate Faces")
+        
+        row = layout.row()
+        row.label(text="To Join press V, (I to Toggle Islands)")
+        
+        
+
+addon_keymaps = []
+
+def menu_func_uv_squares(self, context): self.layout.operator(UvSquares.bl_idname)
+def menu_func_sym_uv_squares(self, context): self.layout.operator(SymUvSquares.bl_idname)
+def menu_func_face_rip(self, context): self.layout.operator(RipFaces.bl_idname)
+def menu_func_face_join(self, context): self.layout.operator(JoinFaces.bl_idname)
+    
 def register():
+    bpy.utils.register_class(UvSquaresPanel)
     bpy.utils.register_class(UvSquares)
     bpy.utils.register_class(SymUvSquares)
     bpy.utils.register_class(RipFaces)
@@ -1261,6 +1308,7 @@ def register():
     addon_keymaps.append(km4)
 
 def unregister():
+    bpy.utils.unregister_class(UvSquaresPanel)
     bpy.utils.unregister_class(UvSquares)
     bpy.utils.unregister_class(SymUvSquares)
     bpy.utils.unregister_class(RipFaces)
@@ -1281,6 +1329,4 @@ def unregister():
 if __name__ == "__main__":
     register()
     
-
-
 
