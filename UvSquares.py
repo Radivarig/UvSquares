@@ -1,6 +1,17 @@
-#    <Uv Squares, Blender addon for UV vertex manipulation (grid/rip/join faces).>
+#    <Uv Squares, Blender addon for reshaping UV vertices to grid.>
 #    Copyright (C) <2014> <Reslav Hollos>
-#    This work is under the MIT License (MIT), see LICENSE file.
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 bl_info = {
     "name": "Uv Squares",
@@ -23,10 +34,7 @@ from collections import defaultdict
 from math import radians, hypot
 import time
 
-#todo: 4 verts selected detection if it should be a face or a line
 #todo: deselect points that are part of edgeFaces but not part of selFaces
-#todo: add to history for undo
-#todo: enable [shift] for mirror 
 
 #known_issue: if loop cut was used, mesh has to be unwrapped again
 #known_issue: if there are 4 corners but it says there are more: undo/join/or unwrap again
