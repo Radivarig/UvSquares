@@ -61,12 +61,8 @@ def main1(context, callsNo = 0):
  
     selVerts, filteredVerts, selFaces, edgeFaces, vertsDict= ListsOfVerts(uv_layer, bm, startTime, allowedTime)  #remember selected verts so we can reselect at end
     
-    if len(filteredVerts) is 0:
+    if (len(filteredVerts) <= 1):
         return 
-    
-    if len(filteredVerts) is 1:
-        SetAll2dCursorsTo(selVerts[0].x, selVerts[0].y)
-        return SuccessFinished(me, startTime)
     
     lucv, ldcv, rucv, rdcv = Corners(selVerts, filteredVerts[:], selFaces, vertsDict)      #left up corner vert, ...
     
@@ -1246,12 +1242,6 @@ class UvSquaresPanel(bpy.types.Panel):
         layout = self.layout
 
         row = layout.row()
-        row.label(text="Select One Vertex to:")
-        split = layout.split()
-        col = split.column(align=True)
-        col.operator(UvSquares.bl_idname, text="Snap Cursor to Vertex", )
-        
-        row = layout.row()
         row.label(text="Select Sequenced Vertices to:")
         split = layout.split()
         col = split.column(align=True)
@@ -1337,4 +1327,5 @@ def unregister():
 if __name__ == "__main__":
     register()
     
+
 
