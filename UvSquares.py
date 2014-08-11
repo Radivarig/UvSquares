@@ -145,7 +145,18 @@ def main4(context):
     
     JoinUvFaces(uv_layer, bm, selFaces, edgeFaces, vertsDict)
     return SuccessFinished(me, startTime)
- 
+
+#snap to axis
+def main5(context):
+    main1(context)
+    return
+
+#snap to axis and make equal distance
+def main6(context):
+    main1(context)
+    main1(context)
+    return
+
 def ErrorFinished(message = ""):
     print("--error:", message)
     return    
@@ -1224,6 +1235,32 @@ class JoinFaces(bpy.types.Operator):
     def execute(self, context):
         main4(context)
         return {'FINISHED'}
+    
+class SnapToAxis(bpy.types.Operator):
+    """Snap sequenced vertices to Axis"""
+    bl_idname = "uv.uv_snap_to_axis"
+    bl_label = "UV snap vertices to axis"
+
+    @classmethod
+    def poll(cls, context):
+        return (context.mode == 'EDIT_MESH')
+
+    def execute(self, context):
+        main5(context)
+        return {'FINISHED'}
+
+class SnapToAxisWithEqual(bpy.types.Operator):
+    """Snap sequenced vertices to Axis with Equal Distance between"""
+    bl_idname = "uv.uv_snap_to_axis_and_equal"
+    bl_label = "UV snap vertices to axis with equal distance between"
+
+    @classmethod
+    def poll(cls, context):
+        return (context.mode == 'EDIT_MESH')
+
+    def execute(self, context):
+        main6(context)
+        return {'FINISHED'}
 
 addon_keymaps = []
 
@@ -1245,11 +1282,11 @@ class UvSquaresPanel(bpy.types.Panel):
         row.label(text="Select Sequenced Vertices to:")
         split = layout.split()
         col = split.column(align=True)
-        col.operator(UvSquares.bl_idname, text="Snap to Axis", )
-        col.operator(UvSquares.bl_idname, text="Snap and Make Equally Distanced (press twice)", )
+        col.operator(SnapToAxis.bl_idname, text="Snap to Axis", )
+        col.operator(SnapToAxisWithEqual.bl_idname, text="Snap with Equal Distance", )
         
         row = layout.row()
-        row.label(text="Select Potential Rectangle (4 corners) ")
+        row.label(text="Select \"Rectangle\" (4 corners):")
         split = layout.split()
         col = split.column(align=True)
         col.operator(UvSquares.bl_idname, text="Convert To Grid", icon = "UV_FACESEL")
@@ -1258,10 +1295,11 @@ class UvSquaresPanel(bpy.types.Panel):
         row.label(text="Select Only Faces to:")
         split = layout.split()
         col = split.column(align=True)
-        col.operator(UvSquares.bl_idname, text="Rip/Separate Faces")
+        col.operator(RipFaces.bl_idname, text="Rip (Separate) Faces")
+        col.operator(JoinFaces.bl_idname, text="Snap to Closest Unselected")
         
         row = layout.row()
-        row.label(text="To Join press V, (I to Toggle Islands)")
+        row.label(text="V - Join (Stitch), I -Toggle Islands")
         
         
 
@@ -1278,13 +1316,15 @@ def register():
     bpy.utils.register_class(SymUvSquares)
     bpy.utils.register_class(RipFaces)
     bpy.utils.register_class(JoinFaces)
+    bpy.utils.register_class(SnapToAxis)
+    bpy.utils.register_class(SnapToAxisWithEqual)
     #menu
     bpy.types.IMAGE_MT_uvs.append(menu_func_uv_squares)
     bpy.types.IMAGE_MT_uvs.append(menu_func_sym_uv_squares)
     bpy.types.IMAGE_MT_uvs.append(menu_func_face_rip)
     bpy.types.IMAGE_MT_uvs.append(menu_func_face_join)
 
-    #handle the keymap
+    #handle keymap
     wm = bpy.context.window_manager
     
     km1 = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
@@ -1304,6 +1344,7 @@ def register():
     addon_keymaps.append(km2)
     addon_keymaps.append(km3)
     addon_keymaps.append(km4)
+    #handle keymap end
 
 def unregister():
     bpy.utils.unregister_class(UvSquaresPanel)
@@ -1311,6 +1352,8 @@ def unregister():
     bpy.utils.unregister_class(SymUvSquares)
     bpy.utils.unregister_class(RipFaces)
     bpy.utils.unregister_class(JoinFaces)
+    bpy.utils.unregister_class(SnapToAxis)
+    bpy.utils.unregister_class(SnapToAxisWithEqual)
     
     bpy.types.IMAGE_MT_uvs.remove(menu_func_uv_squares)
     bpy.types.IMAGE_MT_uvs.remove(menu_func_sym_uv_squares)
