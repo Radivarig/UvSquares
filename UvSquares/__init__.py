@@ -20,7 +20,7 @@ bl_info = {
     "aligns vertices on axis and can make them equally distanced, " 
     "rips/joins faces.",
     "author": "Reslav Hollos",
-    "version": (1, 3, 0),
+    "version": (1, 3, 1),
     "blender": (2, 71, 0),
     "category": "Mesh",
     #"location": "UV Image Editor > UVs > UVs to grid of squares",
@@ -148,45 +148,40 @@ def RespectShape(context, uv_layer, bm, startTime, allowedTime, precision, array
     allowedError = 0.0000001
    
     #check first row 's UP verts
-    rowChecksum = array2dOfVerts[0][0].leftUpVert.y
+    rowChecksum1 = array2dOfVerts[0][0].leftUpVert.y
     for face in array2dOfVerts[0]:
-        if (abs(face.rightUpVert.y - rowChecksum) > allowedError):
-            rowChecksum = None
+        if (abs(face.rightUpVert.y - rowChecksum1) > allowedError):
+            rowChecksum1 = None
             break
-    if rowChecksum is not None:
-        return "skipped"         
     
     #check all row's right verts
     for row in array2dOfVerts:
-        rowChecksum = row[0].leftDownVert.y
+        rowChecksum2 = row[0].leftDownVert.y
         for face in row:
-            if (abs(face.rightDownVert.y - rowChecksum) > allowedError):
-                rowChecksum = None
+            if (abs(face.rightDownVert.y - rowChecksum2) > allowedError):
+                rowChecksum2 = None
                 break
-        if rowChecksum is None: break
-    if rowChecksum is not None:
-        return "skipped"
+        if rowChecksum2 is None: break
     
     #check first column's left verts
-    colChecksum = row[0].leftUpVert.x
+    colChecksum1 = row[0].leftUpVert.x
     for row in array2dOfVerts:
-        if (abs(row[0].leftDownVert.x - colChecksum) > allowedError):
-            colChecksum = None
+        if (abs(row[0].leftDownVert.x - colChecksum1) > allowedError):
+            colChecksum1 = None
             break
-    if colChecksum is not None:
-        return "skipped"
             
     #check all column's right verts
     j = 0
     while (j < len(array2dOfVerts[0])):
-        colChecksum = row[0].rightUpVert.x
+        colChecksum2 = row[0].rightUpVert.x
         for row in array2dOfVerts:
-            if (abs(row[j].rightDownVert.x - colChecksum) > allowedError):
-                colChecksum = None
+            if (abs(row[j].rightDownVert.x - colChecksum2) > allowedError):
+                colChecksum2 = None
                 break
-        if colChecksum is None: break
+        if colChecksum2 is None: break
         j += 1
-    if colChecksum is not None:
+        
+    if rowChecksum1 is None and rowChecksum2 is None and colChecksum1 is None and colChecksum2 is None:
         return "skipped"
         
     #1. select first row's up verts and align to axis
