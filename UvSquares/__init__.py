@@ -15,10 +15,10 @@
 
 bl_info = {
     "name": "Uv Squares",
-    "description": '''Reshapes UV faces to a grid
-    of either equivalent squares or by respect to shape, 
-    aligns vertices on axis and can make them equally distanced, 
-    rips/joins faces.''',
+    "description": "Reshapes UV faces to a grid "
+    "of either equivalent squares or by respect to shape, " 
+    "aligns vertices on axis and can make them equally distanced, " 
+    "rips/joins faces.",
     "author": "Reslav Hollos",
     "version": (1, 3, 0),
     "blender": (2, 71, 0),
