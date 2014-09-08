@@ -1389,7 +1389,7 @@ def RipUvFaces(uv_layer, bm):
     
     return
 
-def JoinUvFaces(uv_layer, bm, precision, selVerts, filteredVerts, vertsDict, radius = 0.1):
+def JoinUvFaces(uv_layer, bm, precision, selVerts, filteredVerts, vertsDict, radius = 0.02):
     for f in bm.faces:
         for l in f.loops:
            luv = l[uv_layer]
