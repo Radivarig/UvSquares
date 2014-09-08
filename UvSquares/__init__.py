@@ -20,7 +20,7 @@ bl_info = {
     "aligns vertices on axis and can make them equally distanced, " 
     "rips/joins faces.",
     "author": "Reslav Hollos",
-    "version": (1, 3, 1),
+    "version": (1, 3, 11),
     "blender": (2, 71, 0),
     "category": "Mesh",
     #"location": "UV Image Editor > UVs > UVs to grid of squares",
@@ -180,8 +180,9 @@ def RespectShape(context, uv_layer, bm, startTime, allowedTime, precision, array
                 break
         if colChecksum2 is None: break
         j += 1
-        
-    if rowChecksum1 is None and rowChecksum2 is None and colChecksum1 is None and colChecksum2 is None:
+    
+    difference = rowChecksum1 is None or rowChecksum2 is None or colChecksum1 is None or colChecksum2 is None
+    if difference is False:
         return "skipped"
         
     #1. select first row's up verts and align to axis
