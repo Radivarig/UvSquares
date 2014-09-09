@@ -40,7 +40,7 @@ import time
 #known_issue: if there are 4 corners but it says there aren't: undo/join/or unwrap again
 #known_issue: if cursor doesn't snap to nearest corner: scale everything up a bit
 
-def main1(context, callsNo = 0, respectShape = True, equalLine = True):
+def main1(context, callsNo = 0, respectShape = True, equalLine = True, horizontal = None):
     allowedRecursion = 5
     callsNo += 1
     if callsNo >= allowedRecursion:
@@ -72,7 +72,7 @@ def main1(context, callsNo = 0, respectShape = True, equalLine = True):
         VertsDictForLine(uv_layer, bm, precision, selVerts, vertsDict)
         
         if AreVectsLinedOnAxis(filteredVerts) is False:
-            ScaleTo0OnAxisAndCursor(filteredVerts, vertsDict, cursorClosestTo)
+            ScaleTo0OnAxisAndCursor(filteredVerts, vertsDict, cursorClosestTo, horizontal)
             return SuccessFinished(me, startTime)
         
         elif equalLine is True:
@@ -113,7 +113,7 @@ def main1(context, callsNo = 0, respectShape = True, equalLine = True):
         elif AreVectorsQuasiEqual(cursorClosestTo, rdcv): cursorOrient = "rightDown"
 
         if respectShape is True:
-            if RespectShape(context, uv_layer, bm, startTime, allowedTime, precision, facesArray2d, vertsDict, edgeFaces, cursorOrient) is not "skipped":
+            if RespectShape(context, uv_layer, bm, startTime, allowedTime, precision, facesArray2d, vertsDict, edgeFaces, cursorOrient, horizontal) is not "skipped":
                 
                 #reselect 
                 DeselectAll()
@@ -133,7 +133,7 @@ def main1(context, callsNo = 0, respectShape = True, equalLine = True):
         SetAll2dCursorsTo(cursorClosestTo.x, cursorClosestTo.y)
         return SuccessFinished(me, startTime)
 
-def RespectShape(context, uv_layer, bm, startTime, allowedTime, precision, array2dOfVerts, vertsDict_, edgeFaces, cursorOrient):
+def RespectShape(context, uv_layer, bm, startTime, allowedTime, precision, array2dOfVerts, vertsDict_, edgeFaces, cursorOrient, horizontal):
     vertsDict = vertsDict_.copy()
     #we add verts of first closest faces, otherwise the selection would rip
     for f in edgeFaces:
@@ -207,7 +207,7 @@ def RespectShape(context, uv_layer, bm, startTime, allowedTime, precision, array
         y = array2dOfVerts[0][len(array2dOfVerts[0])-1].rightUpVert.y
     
     SetAll2dCursorsTo(x, y)
-    main1(context, 0, True, False)
+    main1(context, 0, True, False, True)
    
     #2. select from first to last row's down verts and align to axis
     for row in array2dOfVerts:
@@ -233,7 +233,7 @@ def RespectShape(context, uv_layer, bm, startTime, allowedTime, precision, array
             y = row[len(row)-1].rightDownVert.y
         
         SetAll2dCursorsTo(x, y)
-        main1(context, 0, True, False)
+        main1(context, 0, True, False, True)
     
     #finished horizontal, updating vertsDict
     DeselectAll()
@@ -270,7 +270,7 @@ def RespectShape(context, uv_layer, bm, startTime, allowedTime, precision, array
         y = array2dOfVerts[len(array2dOfVerts)-1][0].leftDownVert.y
    
     SetAll2dCursorsTo(x, y)
-    main1(context, 0, True, False)
+    main1(context, 0, True, False, False)
     DeselectAll()
     #4. select from first to last column's right verts and align to axis
     i, j = 0, 0 
@@ -303,7 +303,7 @@ def RespectShape(context, uv_layer, bm, startTime, allowedTime, precision, array
             y = array2dOfVerts[len(array2dOfVerts)-1][j].rightDownVert.y
    
         SetAll2dCursorsTo(x, y)
-        main1(context, 0, True, False)
+        main1(context, 0, True, False, False)
         DeselectAll()
         j += 1
         
@@ -384,7 +384,7 @@ def ErrorFinished(message = ""):
 def SuccessFinished(me, startTime):
     bmesh.update_edit_mesh(me)
     #use for backtrack of steps 
-    #bpy.ops.ed.undo_push()
+    bpy.ops.ed.undo_push()
     elapsed = round(time.clock()-startTime, 2)
     if (elapsed >= 0.05):
         print("Success! UvSquares has finished, elapsed time:", elapsed, "s.")
@@ -528,20 +528,23 @@ def VertsDictForLine(uv_layer, bm, precision, selVerts, vertsDict):
          
                     vertsDict[(x, y)].append(luv)
     return
-def ScaleTo0OnAxisAndCursor(filteredVerts, vertsDict, startv = None):      
+
+def ScaleTo0OnAxisAndCursor(filteredVerts, vertsDict, startv = None, horizontal = None):      
+    
     verts = filteredVerts
     verts.sort(key=lambda x: x[0])      #sort by .x
     
     first = verts[0]
     last = verts[len(verts)-1]
     
-    horizontal = True
-    if ((last.x - first.x) >0.0001):
-        slope = (last.y - first.y)/(last.x - first.x)
-        if (slope > 1) or (slope <-1):
-            horizontal = False 
-    else: 
-        horizontal = False
+    if horizontal is None:
+        horizontal = True
+        if ((last.x - first.x) >0.0001):
+            slope = (last.y - first.y)/(last.x - first.x)
+            if (slope > 1) or (slope <-1):
+                horizontal = False 
+        else: 
+            horizontal = False
     
     if horizontal is True:
         if startv is None:
