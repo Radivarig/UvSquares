@@ -384,7 +384,7 @@ def ErrorFinished(message = ""):
 def SuccessFinished(me, startTime):
     bmesh.update_edit_mesh(me)
     #use for backtrack of steps 
-    bpy.ops.ed.undo_push()
+    #bpy.ops.ed.undo_push()
     elapsed = round(time.clock()-startTime, 2)
     if (elapsed >= 0.05):
         print("Success! UvSquares has finished, elapsed time:", elapsed, "s.")
