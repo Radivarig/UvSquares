@@ -20,7 +20,7 @@ bl_info = {
     "aligns vertices on axis and can make them equally distanced, " 
     "rips/joins faces.",
     "author": "Reslav Hollos",
-    "version": (1, 3, 11),
+    "version": (1, 3, 13),
     "blender": (2, 71, 0),
     "category": "Mesh",
     #"location": "UV Image Editor > UVs > UVs to grid of squares",
@@ -48,7 +48,7 @@ def main1(context, callsNo = 0, respectShape = True, equalLine = True, horizonta
    
     startTime = time.clock()
     allowedTime = 17
-    precision = 4
+    precision = 3
     
     obj = context.active_object
     me = obj.data
@@ -348,7 +348,7 @@ def main3(context):
 #face join
 def main4(context):
     startTime = time.clock()
-    precision = 4
+    precision = 3
     
     obj = context.active_object
     me = obj.data
