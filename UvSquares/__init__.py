@@ -34,6 +34,7 @@ from collections import defaultdict
 from math import radians, hypot
 import time
 
+#todo: set scale when image ratio is not 1:1
 #todo: deselect points that are part of edgeFaces but not part of selFaces
 
 #known_issue: if loop cut was used, mesh has to be unwrapped again
@@ -79,7 +80,7 @@ def main1(context, callsNo = 0, respectShape = True, equalLine = True, horizonta
             MakeEqualDistanceBetweenVertsInLine(filteredVerts, vertsDict, precision, cursorClosestTo)
             return SuccessFinished(me, startTime)
         
-        else: return ErrorFinished("corner number mismatch, exactly 4 needed")
+        else: return ErrorFinished("else1")
               
     else:
         corners = [lucv, ldcv, rucv, rdcv]
@@ -97,7 +98,7 @@ def main1(context, callsNo = 0, respectShape = True, equalLine = True, horizonta
         
         facesArray2d = Build2DimArrayOfUvFaces(uv_layer, selFaces, lucf, ldcf, rucf, rdcf, startTime, allowedTime)
         if facesArray2d is "retry":
-            ErrorFinished("2d array of faces way not built. Rotating and retrying")
+            ErrorFinished("2d array of faces was not built. Rotating and retrying") 
             angle = 11.23
             if lucv.x == min(lucv.x, rdcv.x):
                 angle = -angle
@@ -1664,6 +1665,8 @@ def unregister():
 if __name__ == "__main__":
     register()
     
+
+
 
 
 
