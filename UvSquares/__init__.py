@@ -20,7 +20,7 @@ bl_info = {
     "aligns vertices on axis and can make them equally distanced, " 
     "rips/joins faces.",
     "author": "Reslav Hollos",
-    "version": (1, 3, 14),
+    "version": (1, 3, 15),
     "blender": (2, 71, 0),
     "category": "Mesh",
     #"location": "UV Image Editor > UVs > UVs to grid of squares",
@@ -34,34 +34,34 @@ from collections import defaultdict
 from math import radians, hypot
 import time
 
+allowedTime = 17
+allowedFaces = 2200
+allowedRecursion = 5
+precision = 3
+
 #todo: set scale when image ratio is not 1:1
+#todo: make joining radius scale with editor zoom rate or average unit length
+#todo: align to axis by respect to vert distance
 #todo: deselect points that are part of edgeFaces but not part of selFaces
 
-#known_issue: if loop cut was used, mesh has to be unwrapped again
-#known_issue: if there are 4 corners but it says there aren't: undo/join/or unwrap again
-#known_issue: if cursor doesn't snap to nearest corner: scale everything up a bit
+#note: if verts are snapping strangely rotate/scale up and retry
 
 def main1(context, callsNo = 0, respectShape = True, equalLine = True, horizontal = None):
-    allowedRecursion = 5
     callsNo += 1
     if callsNo >= allowedRecursion:
         return ErrorFinished("exceeded recursion limit of " + callsNo)
-   
-    startTime = time.clock()
-    allowedTime = 17
-    precision = 3
     
+    startTime = time.clock()
     obj = context.active_object
     me = obj.data
     bm = bmesh.from_edit_mesh(me)
     uv_layer = bm.loops.layers.uv.verify()
     bm.faces.layers.tex.verify()  # currently blender needs both layers.
     
-    global allowedFaces; allowedFaces = 2200
     if len(bm.faces) > allowedFaces:
         return ErrorFinished("selected more than " +str(allowedFaces) +"allowed faces.") 
  
-    selVerts, filteredVerts, selFaces, edgeFaces, vertsDict= ListsOfVerts(uv_layer, bm, startTime, allowedTime, precision)  #remember selected verts so we can reselect at end
+    selVerts, filteredVerts, selFaces, edgeFaces, vertsDict= ListsOfVerts(uv_layer, bm, startTime)  #remember selected verts so we can reselect at end
     
     if (len(filteredVerts) <= 1):
         return 
@@ -70,17 +70,17 @@ def main1(context, callsNo = 0, respectShape = True, equalLine = True, horizonta
     
     cursorClosestTo = CursorClosestTo(filteredVerts)
     if len(selFaces) is 0:
-        VertsDictForLine(uv_layer, bm, precision, selVerts, vertsDict)
+        VertsDictForLine(uv_layer, bm, selVerts, vertsDict)
         
         if AreVectsLinedOnAxis(filteredVerts) is False:
             ScaleTo0OnAxisAndCursor(filteredVerts, vertsDict, cursorClosestTo, horizontal)
             return SuccessFinished(me, startTime)
         
         elif equalLine is True:
-            MakeEqualDistanceBetweenVertsInLine(filteredVerts, vertsDict, precision, cursorClosestTo)
+            MakeEqualDistanceBetweenVertsInLine(filteredVerts, vertsDict, cursorClosestTo)
             return SuccessFinished(me, startTime)
         
-        else: return ErrorFinished("corner number mismatch, exactly 4 needed")
+        else: return ErrorFinished("else1")
               
     else:
         corners = [lucv, ldcv, rucv, rdcv]
@@ -96,7 +96,7 @@ def main1(context, callsNo = 0, respectShape = True, equalLine = True, horizonta
         if lucf is None or ldcf is None or rucf is None or rdcf is None: 
             return ErrorFinished("not all corner face parts were recognized.")
         
-        facesArray2d = Build2DimArrayOfUvFaces(uv_layer, selFaces, lucf, ldcf, rucf, rdcf, startTime, allowedTime)
+        facesArray2d = Build2DimArrayOfUvFaces(uv_layer, selFaces, lucf, ldcf, rucf, rdcf, startTime)
         if facesArray2d is "retry":
             ErrorFinished("2d array of faces was not built. Rotating and retrying")
             angle = 11.23
@@ -114,7 +114,7 @@ def main1(context, callsNo = 0, respectShape = True, equalLine = True, horizonta
         elif AreVectorsQuasiEqual(cursorClosestTo, rdcv): cursorOrient = "rightDown"
 
         if respectShape is True:
-            if RespectShape(context, uv_layer, bm, startTime, allowedTime, precision, facesArray2d, vertsDict, edgeFaces, cursorOrient, horizontal) is not "skipped":
+            if RespectShape(context, uv_layer, bm, startTime, facesArray2d, vertsDict, edgeFaces, cursorOrient, horizontal) is not "skipped":
                 
                 #reselect 
                 DeselectAll()
@@ -128,13 +128,13 @@ def main1(context, callsNo = 0, respectShape = True, equalLine = True, horizonta
                 return SuccessFinished(me, startTime)
       
         print("skipping since shape is in grid")
-        MakeUvFacesEqualRectangles(uv_layer, precision, vertsDict, edgeFaces, facesArray2d, lucv, ldcv, rucv, rdcv, cursorClosestTo)
+        MakeUvFacesEqualRectangles(uv_layer, vertsDict, edgeFaces, facesArray2d, lucv, ldcv, rucv, rdcv, cursorClosestTo)
         
         #restore cursor
         SetAll2dCursorsTo(cursorClosestTo.x, cursorClosestTo.y)
         return SuccessFinished(me, startTime)
 
-def RespectShape(context, uv_layer, bm, startTime, allowedTime, precision, array2dOfVerts, vertsDict_, edgeFaces, cursorOrient, horizontal):
+def RespectShape(context, uv_layer, bm, startTime, array2dOfVerts, vertsDict_, edgeFaces, cursorOrient, horizontal):
     vertsDict = vertsDict_.copy()
     #we add verts of first closest faces, otherwise the selection would rip
     for f in edgeFaces:
@@ -146,7 +146,7 @@ def RespectShape(context, uv_layer, bm, startTime, allowedTime, precision, array
             vertsDict[(x,y)].append(luv)
     
     #check if shape is already in a grid, so we MakeUvFacesEqualRectangles
-    allowedError = 0.0000001
+    allowedError = 0.0009
    
     #check first row 's UP verts
     rowChecksum1 = array2dOfVerts[0][0].leftUpVert.y
@@ -242,7 +242,7 @@ def RespectShape(context, uv_layer, bm, startTime, allowedTime, precision, array
         for v in vertsDict[(key[0], key[1])]:
             v.select = True
             
-    selVerts, filteredVerts, selFaces, edgeFaces, vertsDict= ListsOfVerts(uv_layer, bm, startTime, allowedTime, precision)  #remember selected verts so we can reselect at end
+    selVerts, filteredVerts, selFaces, edgeFaces, vertsDict= ListsOfVerts(uv_layer, bm, startTime)  #remember selected verts so we can reselect at end
     
     #3. select first column's left verts and align to axis
     
@@ -312,6 +312,7 @@ def RespectShape(context, uv_layer, bm, startTime, allowedTime, precision, array
 
 #sym UvSquares
 def main2(context, respectShape = True):
+    startTime = time.clock()
     
     obj = context.active_object
     me = obj.data
@@ -319,15 +320,14 @@ def main2(context, respectShape = True):
     uv_layer = bm.loops.layers.uv.verify()
     bm.faces.layers.tex.verify()
     
-    selVerts, filteredVerts, selFaces, edgeFaces, vertsDict= ListsOfVerts(uv_layer, bm, time.clock(), 17, 4) 
+    selVerts, filteredVerts, selFaces, edgeFaces, vertsDict= ListsOfVerts(uv_layer, bm, startTime) 
     lucv, ldcv, rucv, rdcv = Corners(selVerts, filteredVerts[:], selFaces, vertsDict)    
     
     setTo = CursorClosestTo([lucv, ldcv, rdcv, rucv]) 
     SetAll2dCursorsTo(setTo.x, setTo.y)
                 
     SymmetrySelected("X", "CURSOR")
-    main1(context, 0, respectShape, False)
-    
+    main1(context, 0, respectShape, False)    
     SetAll2dCursorsTo(setTo.x, setTo.y)
     SymmetrySelected("X", "CURSOR")
     return
@@ -349,7 +349,6 @@ def main3(context):
 #face join
 def main4(context):
     startTime = time.clock()
-    precision = 3
     
     obj = context.active_object
     me = obj.data
@@ -358,9 +357,9 @@ def main4(context):
     uv_layer = bm.loops.layers.uv.verify()
     bm.faces.layers.tex.verify()  # currently blender needs both layers.
       
-    selVerts, filteredVerts, selFaces, edgeFaces, vertsDict= ListsOfVerts(uv_layer, bm, startTime, 17, precision)
+    selVerts, filteredVerts, selFaces, edgeFaces, vertsDict= ListsOfVerts(uv_layer, bm, startTime)
     
-    JoinUvFaces(uv_layer, bm, precision, selVerts, filteredVerts, vertsDict)
+    JoinUvFaces(uv_layer, bm, selVerts, filteredVerts, vertsDict)
     return SuccessFinished(me, startTime)
 
 #snap to axis
@@ -372,10 +371,6 @@ def main5(context):
 def main6(context):
     main1(context)
     main1(context)
-    return
-
-def main7(context):
-    main1(context, true)
     return
 
 def ErrorFinished(message = ""):
@@ -398,7 +393,7 @@ def SymmetrySelected(axis, pivot = "MEDIAN"):
     bpy.context.space_data.pivot_point = last_pivot
     return
 
-def RotateAndRecall(context, callsNo, uv_layer, precision, selVerts, edgeFaces, vertsDict, angle, cursorV):
+def RotateAndRecall(context, callsNo, uv_layer, selVerts, edgeFaces, vertsDict, angle, cursorV):
     print("callsNo", callsNo)
     
     pivot = None
@@ -451,7 +446,7 @@ def MakeCornerUvFacesFrom4Corners(lucv,ldcv, rucv, rdcv):
     d = face
     return a,b,c,d
 
-def MakeEqualDistanceBetweenVertsInLine(filteredVerts, vertsDict, precision, startv = None):    
+def MakeEqualDistanceBetweenVertsInLine(filteredVerts, vertsDict, startv = None):    
     verts = filteredVerts
     verts.sort(key=lambda x: x[0])      #sort by .x
     
@@ -519,7 +514,7 @@ def MakeEqualDistanceBetweenVertsInLine(filteredVerts, vertsDict, precision, sta
             currentY = currentY - finalScale
     return
 
-def VertsDictForLine(uv_layer, bm, precision, selVerts, vertsDict):
+def VertsDictForLine(uv_layer, bm, selVerts, vertsDict):
     for f in bm.faces:
         for l in f.loops:
                 luv = l[uv_layer]
@@ -586,7 +581,7 @@ def ScaleTo0(axis):
     bpy.context.space_data.pivot_point = last_pivot
     return
 
-def MakeUvFacesEqualRectangles(uv_layer, precision, vertsDict, edgeFaces, array2dOfVerts, lucv, ldcv, rucv, rdcv, startv):
+def MakeUvFacesEqualRectangles(uv_layer, vertsDict, edgeFaces, array2dOfVerts, lucv, ldcv, rucv, rdcv, startv):
     rowNumber = len(array2dOfVerts) +1 #number of faces +1 equals number of rows, same for column
     colNumber = len(array2dOfVerts[0]) +1
     
@@ -719,7 +714,6 @@ def Corners(selVerts, filteredVerts, selFaces, vertsDict):
         leftDown = secondLowest
         rightDown = firstLowest
     
-    #print(leftUp, leftDown, rightUp, rightDown)
     return leftUp, leftDown, rightUp, rightDown
 
 def AreUvFacesEqual(face1, face2):
@@ -727,7 +721,7 @@ def AreUvFacesEqual(face1, face2):
         return True
     return False
 
-def Build2DimArrayOfUvFaces(uv_layer, selFaces, lucf, ldcf, rucf, rdcf, startTime, allowedTime):
+def Build2DimArrayOfUvFaces(uv_layer, selFaces, lucf, ldcf, rucf, rdcf, startTime):
     array2dOfVerts = []
     
     start = lucf
@@ -752,7 +746,6 @@ def Build2DimArrayOfUvFaces(uv_layer, selFaces, lucf, ldcf, rucf, rdcf, startTim
         end = FaceDownOf(uv_layer, selFaces, end)
         
         if start is None or end is None:
-            #print("")
             return "retry"
        
     return array2dOfVerts
@@ -760,10 +753,7 @@ def Build2DimArrayOfUvFaces(uv_layer, selFaces, lucf, ldcf, rucf, rdcf, startTim
 def UvFacesFromTo(uv_layer, selFaces, start, end):
     column = []
     current = start
-    
-    #print(startUvF.leftUpVert, startUvF.leftDownVert, startUvF.rightUpVert, startUvF.rightDownVert)
-    #print(endUvF.leftUpVert, endUvF.leftDownVert, endUvF.rightUpVert, endUvF.rightDownVert)
-    
+        
     if(AreUvFacesEqual(current, end)):
         column.append(current)
         return column
@@ -1279,9 +1269,7 @@ def RotateSelected(angle, pivot = None):
     
     for area in bpy.context.screen.areas:
         if area.type == 'IMAGE_EDITOR':
-            #bpy.ops.transform.rotate({'pivot_point': pivot}, value=radians(angle), axis=(-0, -0, -1), constraint_axis=(False, False, False), constraint_orientation='LOCAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
             bpy.ops.transform.rotate(value=radians(angle), axis=(-0, -0, -1), constraint_axis=(False, False, False), constraint_orientation='LOCAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
-
             break
 
     bpy.context.space_data.pivot_point = last_pivot
@@ -1303,7 +1291,7 @@ def AreVectorsQuasiEqual(vect1, vect2, allowedError = 0.0001):
         return True
     return False
 
-def ListsOfVerts(uv_layer, bm, startTime, allowedTime, precision):
+def ListsOfVerts(uv_layer, bm, startTime):
     selVerts = []
     filteredVerts = []
     selFaces = []
@@ -1389,7 +1377,7 @@ def RipUvFaces(uv_layer, bm):
     
     return
 
-def JoinUvFaces(uv_layer, bm, precision, selVerts, filteredVerts, vertsDict, radius = 0.02):
+def JoinUvFaces(uv_layer, bm, selVerts, filteredVerts, vertsDict, radius = 0.02):
     for f in bm.faces:
         for l in f.loops:
            luv = l[uv_layer]
@@ -1625,7 +1613,7 @@ def register():
     addon_keymaps.append((km, kmi))
     
     km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
-    kmi = km.keymap_items.new(SymUvSquares.bl_idname, 'E', 'PRESS', alt=True, shift=True)
+    kmi = km.keymap_items.new(SymUvGridByShape.bl_idname, 'E', 'PRESS', alt=True, shift=True)
     addon_keymaps.append((km, kmi))
     
     km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
@@ -1665,6 +1653,7 @@ def unregister():
 if __name__ == "__main__":
     register()
     
+
 
 
 
