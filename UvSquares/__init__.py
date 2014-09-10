@@ -20,7 +20,7 @@ bl_info = {
     "aligns vertices on axis and can make them equally distanced, " 
     "rips/joins faces.",
     "author": "Reslav Hollos",
-    "version": (1, 3, 13),
+    "version": (1, 3, 14),
     "blender": (2, 71, 0),
     "category": "Mesh",
     #"location": "UV Image Editor > UVs > UVs to grid of squares",
@@ -80,7 +80,7 @@ def main1(context, callsNo = 0, respectShape = True, equalLine = True, horizonta
             MakeEqualDistanceBetweenVertsInLine(filteredVerts, vertsDict, precision, cursorClosestTo)
             return SuccessFinished(me, startTime)
         
-        else: return ErrorFinished("else1")
+        else: return ErrorFinished("corner number mismatch, exactly 4 needed")
               
     else:
         corners = [lucv, ldcv, rucv, rdcv]
@@ -98,7 +98,7 @@ def main1(context, callsNo = 0, respectShape = True, equalLine = True, horizonta
         
         facesArray2d = Build2DimArrayOfUvFaces(uv_layer, selFaces, lucf, ldcf, rucf, rdcf, startTime, allowedTime)
         if facesArray2d is "retry":
-            ErrorFinished("2d array of faces was not built. Rotating and retrying") 
+            ErrorFinished("2d array of faces was not built. Rotating and retrying")
             angle = 11.23
             if lucv.x == min(lucv.x, rdcv.x):
                 angle = -angle
@@ -165,7 +165,7 @@ def RespectShape(context, uv_layer, bm, startTime, allowedTime, precision, array
         if rowChecksum2 is None: break
     
     #check first column's left verts
-    colChecksum1 = row[0].leftUpVert.x
+    colChecksum1 = array2dOfVerts[0][0].leftUpVert.x
     for row in array2dOfVerts:
         if (abs(row[0].leftDownVert.x - colChecksum1) > allowedError):
             colChecksum1 = None
@@ -174,7 +174,7 @@ def RespectShape(context, uv_layer, bm, startTime, allowedTime, precision, array
     #check all column's right verts
     j = 0
     while (j < len(array2dOfVerts[0])):
-        colChecksum2 = row[0].rightUpVert.x
+        colChecksum2 = array2dOfVerts[0][j].rightUpVert.x
         for row in array2dOfVerts:
             if (abs(row[j].rightDownVert.x - colChecksum2) > allowedError):
                 colChecksum2 = None
