@@ -727,7 +727,7 @@ def RipUvFaces(context):
                 luv.select = False
         
         target.select = True
-        return
+        return SuccessFinished(me, startTime)
 
     DeselectAll()
     
