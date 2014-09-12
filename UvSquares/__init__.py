@@ -31,8 +31,7 @@ from collections import defaultdict
 from math import radians, hypot
 import time
 
-allowedTime = 5
-allowedFaces = 2200
+allowedFaces = 2200 
 precision = 3
 
 #todo: deselect vertices out of targetFace island
@@ -51,14 +50,13 @@ def main(context, square = False, snapToClosest = False):
     bm.faces.layers.tex.verify()  # currently blender needs both layers.
     #
     face_act = bm.faces.active
-    
-    if len(bm.faces) > allowedFaces:
-        return "selected more than " +str(allowedFaces) +"allowed faces."
-    
-    #targetFace = NearestSelFaceToCursor(uv_layer, bm, startTime)
     targetFace = face_act
     
-    selVerts, edgeVerts, filteredVerts, selFaces, vertsDict, isTargetSel = ListsOfVerts(uv_layer, bm, startTime, targetFace)
+    if len(bm.faces) > allowedFaces:
+        print("selected more than " +str(allowedFaces) +" allowed faces.")
+        return 
+    
+    selVerts, edgeVerts, filteredVerts, selFaces, vertsDict, isTargetSel = ListsOfVerts(uv_layer, bm, targetFace)
     
     if len(selVerts) is 0: return 
     if len(filteredVerts) is 1: 
@@ -85,7 +83,7 @@ def main(context, square = False, snapToClosest = False):
     #else:
     
     if isTargetSel is False:
-        targetFace = selFaces[2]
+        targetFace = selFaces[0]
         
     ShapeFace(uv_layer, targetFace, vertsDict, square)
 
@@ -195,14 +193,14 @@ def SnapCursorToClosestSelected(filteredVerts):
     
     return
 
-def ListsOfVerts(uv_layer, bm, startTime, targetFace = None):
+def ListsOfVerts(uv_layer, bm, targetFace = None):
     selVerts = []
     edgeVerts = []
     filteredVerts = []
     selFaces = []
     vertsDict = defaultdict(list)                #dict
     isTargetSel = False
-    for f in bm.faces:
+    for f in bm.faces:          
         isFaceSel = True
         isFaceContainSelV = False
         for l in f.loops:
@@ -216,11 +214,6 @@ def ListsOfVerts(uv_layer, bm, startTime, targetFace = None):
         if isFaceSel is True:
             if (f == targetFace): 
                 isTargetSel = True
-                
-            if (time.clock() - startTime > allowedTime):
-                #TODO: make warning from UI
-                print("time limit of", allowedTime,"exceeded while mapping verts.")
-                return None        
 
             for l in f.loops:
                 luv = l[uv_layer]
@@ -241,7 +234,7 @@ def ListsOfVerts(uv_layer, bm, startTime, targetFace = None):
                     edgeVerts.append(luv)
     
     [filteredVerts.append(v) for v in selVerts if CountQuasiEqualVerts(v, filteredVerts) is 0]
-   
+
     return selVerts, edgeVerts, filteredVerts, selFaces, vertsDict, isTargetSel
 
 #modified ideasman42's uvcalc_follow_active.py
@@ -427,33 +420,6 @@ def FollowActiveUV(me, f_act, faces, EXTEND_MODE = 'LENGTH_AVERAGE'):
     bmesh.update_edit_mesh(me, False)
 
 '''----------------------------------'''
-    
-#face join
-def main4(context):
-    startTime = time.clock()
-    
-    obj = context.active_object
-    me = obj.data
-    bm = bmesh.from_edit_mesh(me)
-    
-    uv_layer = bm.loops.layers.uv.verify()
-    bm.faces.layers.tex.verify()  # currently blender needs both layers.
-      
-    selVerts, filteredVerts, selFaces, edgeFaces, vertsDict= ListsOfVerts(uv_layer, bm, startTime)
-    
-    JoinUvFaces(uv_layer, bm, selVerts, filteredVerts, vertsDict)
-    return SuccessFinished(me, startTime)
-
-#snap to axis
-def main5(context):
-    main1(context)
-    return
-
-#snap to axis and make equal distance
-def main6(context):
-    main1(context)
-    main1(context)
-    return
 
 def SuccessFinished(me, startTime):
     #use for backtrack of steps 
@@ -773,7 +739,21 @@ def RipUvFaces(context):
     
     return SuccessFinished(me, startTime)
 
-def JoinUvFaces(uv_layer, bm, selVerts, filteredVerts, vertsDict, radius = 0.02):
+def JoinUvFaces(context):
+    startTime = time.clock()
+    
+    obj = context.active_object
+    me = obj.data
+    bm = bmesh.from_edit_mesh(me)
+    
+    uv_layer = bm.loops.layers.uv.verify()
+    bm.faces.layers.tex.verify()  # currently blender needs both layers.
+    
+    vertsDict = defaultdict(list)        #dict 
+             
+    #TODO: radius by image scale
+    radius = 0.02
+    
     for f in bm.faces:
         for l in f.loops:
            luv = l[uv_layer]
@@ -798,9 +778,11 @@ def JoinUvFaces(uv_layer, bm, selVerts, filteredVerts, vertsDict, radius = 0.02)
         
             if min is not 1000:
                 for v in vertsDict[(key[0], key[1])]:
-                    v.uv.x = minV.uv.x
-                    v.uv.y = minV.uv.y
-    return
+                    v = v.uv
+                    v.x = minV.uv.x
+                    v.y = minV.uv.y
+    
+    return SuccessFinished(me, startTime)
 
 def DeselectAll():
     bpy.ops.uv.select_all(action='DESELECT')
@@ -858,7 +840,7 @@ class JoinFaces(bpy.types.Operator):
         return (context.mode == 'EDIT_MESH')
 
     def execute(self, context):
-        main4(context)
+        JoinUvFaces(context)
         bpy.ops.ed.undo_push()
         return {'FINISHED'}
     
