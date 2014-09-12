@@ -33,7 +33,6 @@ import time
 
 allowedTime = 5
 allowedFaces = 2200
-allowedRecursion = 5
 precision = 3
 
 #todo: deselect vertices out of targetFace island
@@ -43,7 +42,7 @@ precision = 3
 #todo: test and set face count limit
 #todo: snap 2dCursor to closest selected vert (when more vertices are selected
 
-def main(context, sym = False, EXTEND_MODE = 'LENGTH_AVERAGE', snapToClosest = False):
+def main(context, sym = False, square = False, snapToClosest = False):
     startTime = time.clock()
     obj = context.active_object
     me = obj.data
@@ -59,7 +58,7 @@ def main(context, sym = False, EXTEND_MODE = 'LENGTH_AVERAGE', snapToClosest = F
     #targetFace = NearestSelFaceToCursor(uv_layer, bm, startTime)
     targetFace = face_act
     
-    selVerts, edgeVerts, filteredVerts, selFaces, vertsDict = ListsOfVerts(uv_layer, bm, startTime)
+    selVerts, edgeVerts, filteredVerts, selFaces, vertsDict, isTargetSel = ListsOfVerts(uv_layer, bm, startTime, targetFace)
     
     if len(selVerts) is 0: return 
     if len(filteredVerts) is 1: 
@@ -67,7 +66,6 @@ def main(context, sym = False, EXTEND_MODE = 'LENGTH_AVERAGE', snapToClosest = F
         return 
     
     cursorClosestTo = CursorClosestTo(filteredVerts)
-    
     #line is selected
     if len(selFaces) is 0:
         if snapToClosest is True:
@@ -85,23 +83,23 @@ def main(context, sym = False, EXTEND_MODE = 'LENGTH_AVERAGE', snapToClosest = F
         
    
     #else:
-    ShapeFace(uv_layer, targetFace, vertsDict, sym, EXTEND_MODE)
+    
+    if isTargetSel is False:
+        targetFace = selFaces[2]
+        
+    ShapeFace(uv_layer, targetFace, vertsDict, sym, square)
 
-    FollowActiveUV(me, targetFace, selFaces, EXTEND_MODE)
+    FollowActiveUV(me, targetFace, selFaces)
     
     #edge has ripped so we connect it back 
     for ev in edgeVerts:
         x, y = round(ev.uv.x, precision), round(ev.uv.y, precision)
         ev.uv = vertsDict[(x,y)][0].uv
     
-    #finished
-    bmesh.update_edit_mesh(me)
-    elapsed = round(time.clock() - startTime, 2)
-    if (elapsed > 0.009): return "UvSquares finished! Elapsed time: " + str(elapsed) + "s.";
-    return
+    return SuccessFinished(me, startTime)
 
 
-def ShapeFace(uv_layer, targetFace, vertsDict, sym, EXTEND_MODE):
+def ShapeFace(uv_layer, targetFace, vertsDict, sym, square):
     corners = []
     for l in targetFace.loops:
         luv = l[uv_layer]
@@ -109,20 +107,19 @@ def ShapeFace(uv_layer, targetFace, vertsDict, sym, EXTEND_MODE):
     
     lucv, ldcv, rucv, rdcv = Corners(corners)
     
-    square = False
-    if EXTEND_MODE is 'SQUARE': square = True
-    
     #we set cursor to startV so sym can work
     setTo = CursorClosestTo([lucv, ldcv, rdcv, rucv])
     if setTo is None: 
         setTo.x, setTo.y = lucv.x, lucv.y 
     SetAll2dCursorsTo(setTo.uv.x, setTo.uv.y)
     
+    #todo: fix sym sqaring and corner squaring
+    #sym = True
+    #if sym: SymmetrySelected("X", "CURSOR")
     MakeUvFaceEqualRectangle(vertsDict, lucv, rucv, rdcv, ldcv, setTo, square)
-
-    
+    #if sym: SymmetrySelected("X", "CURSOR")
+  
     return
-
 
 def MakeUvFaceEqualRectangle(vertsDict, lucv, rucv, rdcv, ldcv, startv, square = False, ratio = 1):   
     if startv is None: startv = lucv.uv
@@ -135,7 +132,7 @@ def MakeUvFaceEqualRectangle(vertsDict, lucv, rucv, rdcv, ldcv, startv, square =
     rucv = rucv.uv
     rdcv = rdcv.uv
     ldcv = ldcv.uv    
-    
+   
     if (startv == lucv): 
         finalScaleX = hypotVert(lucv, rucv)
         finalScaleY = hypotVert(lucv, ldcv)
@@ -176,16 +173,16 @@ def MakeUvFaceEqualRectangle(vertsDict, lucv, rucv, rdcv, ldcv, startv, square =
         v.uv.y = currRowY
     
     #rdcv, ldcv
-    x = round(ldcv.x, precision)
-    y = round(ldcv.y, precision)    
-    for v in vertsDict[(x,y)]:
-        v.uv.x = currRowX
-        v.uv.y = currRowY - finalScaleY
-        
     x = round(rdcv.x, precision)
     y = round(rdcv.y, precision)    
     for v in vertsDict[(x,y)]:
         v.uv.x = currRowX + finalScaleX
+        v.uv.y = currRowY - finalScaleY
+        
+    x = round(ldcv.x, precision)
+    y = round(ldcv.y, precision)    
+    for v in vertsDict[(x,y)]:
+        v.uv.x = currRowX
         v.uv.y = currRowY - finalScaleY
         
     return
@@ -197,13 +194,13 @@ def SnapCursorToClosestSelected(filteredVerts):
     
     return
 
-def ListsOfVerts(uv_layer, bm, startTime):
+def ListsOfVerts(uv_layer, bm, startTime, targetFace):
     selVerts = []
     edgeVerts = []
     filteredVerts = []
     selFaces = []
     vertsDict = defaultdict(list)                #dict
-    
+    isTargetSel = False
     for f in bm.faces:
         isFaceSel = True
         isFaceContainSelV = False
@@ -216,6 +213,9 @@ def ListsOfVerts(uv_layer, bm, startTime):
                 selVerts.append(luv)
     
         if isFaceSel is True:
+            if (f == targetFace): 
+                isTargetSel = True
+                
             if (time.clock() - startTime > allowedTime):
                 #TODO: make warning from UI
                 print("time limit of", allowedTime,"exceeded while mapping verts.")
@@ -241,10 +241,10 @@ def ListsOfVerts(uv_layer, bm, startTime):
     
     [filteredVerts.append(v) for v in selVerts if CountQuasiEqualVerts(v, filteredVerts) is 0]
    
-    return selVerts, edgeVerts, filteredVerts, selFaces, vertsDict
+    return selVerts, edgeVerts, filteredVerts, selFaces, vertsDict, isTargetSel
 
 #modified ideasman42's uvcalc_follow_active.py
-def FollowActiveUV(me, f_act, faces, EXTEND_MODE):
+def FollowActiveUV(me, f_act, faces, EXTEND_MODE = 'LENGTH_AVERAGE'):
     bm = bmesh.from_edit_mesh(me)
     uv_act = bm.loops.layers.uv.active
 
@@ -438,17 +438,7 @@ def main1(context, callsNo = 0, respectShape = True, equalLine = True, horizonta
         #sym UvSquares
 def main2(context, respectShape = True):
    
-    '''setTo = CursorClosestTo([lucv, ldcv, rdcv, rucv])
-    if setTo is None: 
-        setTo.x, setTo.y = lucv.x, lucv.y 
-    SetAll2dCursorsTo(setTo.x, setTo.y)
-                
-    SymmetrySelected("X", "CURSOR")
-    main1(context, 0, respectShape, False)    
-    SetAll2dCursorsTo(setTo.x, setTo.y)
-    SymmetrySelected("X", "CURSOR")
-    '''    
-
+    
     return
     
 #face rip    
@@ -495,6 +485,7 @@ def main6(context):
 def SuccessFinished(me, startTime):
     #use for backtrack of steps 
     #bpy.ops.ed.undo_push()
+    bmesh.update_edit_mesh(me)
     elapsed = round(time.clock()-startTime, 2)
     if (elapsed >= 0.05):
         print("Success! UvSquares has finished, elapsed time:", elapsed, "s.")
@@ -568,6 +559,7 @@ def MakeEqualDistanceBetweenVertsInLine(filteredVerts, vertsDict, startv = None)
         last = verts[len(verts)-1]
         
         for v in verts:
+            v = v.uv
             x = round(v.x, precision)
             y = round(v.y, precision)
             
