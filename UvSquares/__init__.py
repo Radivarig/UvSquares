@@ -36,6 +36,8 @@ allowedFaces = 2200
 allowedRecursion = 5
 precision = 3
 
+#todo: deselect vertices out of targetFace island
+#todo: set scale when image ratio is not 1:1
 #todo: make joining radius scale with editor zoom rate or average unit length
 #todo: align to axis by respect to vert distance
 #todo: test and set face count limit
@@ -83,7 +85,7 @@ def main(context, sym = False, EXTEND_MODE = 'LENGTH_AVERAGE', snapToClosest = F
         
    
     #else:
-    ShapeFace(targetFace, vertsDict, sym, EXTEND_MODE)
+    ShapeFace(uv_layer, targetFace, vertsDict, sym, EXTEND_MODE)
 
     FollowActiveUV(me, targetFace, selFaces, EXTEND_MODE)
     
@@ -92,14 +94,100 @@ def main(context, sym = False, EXTEND_MODE = 'LENGTH_AVERAGE', snapToClosest = F
         x, y = round(ev.uv.x, precision), round(ev.uv.y, precision)
         ev.uv = vertsDict[(x,y)][0].uv
     
+    #finished
+    bmesh.update_edit_mesh(me)
     elapsed = round(time.clock() - startTime, 2)
     if (elapsed > 0.009): return "UvSquares finished! Elapsed time: " + str(elapsed) + "s.";
     return
 
-def ShapeFace(targetFace, vertsDict, sym, EXTEND_MODE):
-    #lucv, ldcv, rucv, rdcv = Corners(selVerts, filteredVerts[:], selFaces, vertsDict)      #left up corner vert, ...
+
+def ShapeFace(uv_layer, targetFace, vertsDict, sym, EXTEND_MODE):
+    corners = []
+    for l in targetFace.loops:
+        luv = l[uv_layer]
+        corners.append(luv)
+    
+    lucv, ldcv, rucv, rdcv = Corners(corners)
+    
+    square = False
+    if EXTEND_MODE is 'SQUARE': square = True
+    
+    #we set cursor to startV so sym can work
+    setTo = CursorClosestTo([lucv, ldcv, rdcv, rucv])
+    if setTo is None: 
+        setTo.x, setTo.y = lucv.x, lucv.y 
+    SetAll2dCursorsTo(setTo.uv.x, setTo.uv.y)
+    
+    MakeUvFaceEqualRectangle(vertsDict, lucv, rucv, rdcv, ldcv, setTo, square)
 
     
+    return
+
+
+def MakeUvFaceEqualRectangle(vertsDict, lucv, rucv, rdcv, ldcv, startv, square = False, ratio = 1):   
+    if startv is None: startv = lucv.uv
+    elif AreVertsQuasiEqual(startv, rucv): startv = rucv.uv
+    elif AreVertsQuasiEqual(startv, rdcv): startv = rdcv.uv
+    elif AreVertsQuasiEqual(startv, ldcv): startv = ldcv.uv
+    else: startv = lucv.uv
+    
+    lucv = lucv.uv
+    rucv = rucv.uv
+    rdcv = rdcv.uv
+    ldcv = ldcv.uv    
+    
+    if (startv == lucv): 
+        finalScaleX = hypotVert(lucv, rucv)
+        finalScaleY = hypotVert(lucv, ldcv)
+        currRowX = lucv.x
+        currRowY = lucv.y
+    
+    elif (startv == rucv):
+        finalScaleX = hypotVert(rucv, lucv)
+        finalScaleY = hypotVert(rucv, rdcv)
+        currRowX = rucv.x - finalScaleX
+        currRowY = rucv.y
+       
+    elif (startv == rdcv):
+        finalScaleX = hypotVert(rdcv, ldcv)
+        finalScaleY = hypotVert(rdcv, rucv)
+        currRowX = rdcv.x - finalScaleX
+        currRowY = rdcv.y + finalScaleY
+        
+    else:
+        finalScaleX = hypotVert(ldcv, rdcv)
+        finalScaleY = hypotVert(ldcv, lucv)
+        currRowX = ldcv.x
+        currRowY = ldcv.y +finalScaleY
+    
+    if square: finalScaleY = finalScaleX
+    
+    #lucv, rucv
+    x = round(lucv.x, precision)
+    y = round(lucv.y, precision)
+    for v in vertsDict[(x,y)]:
+        v.uv.x = currRowX
+        v.uv.y = currRowY
+  
+    x = round(rucv.x, precision)
+    y = round(rucv.y, precision)
+    for v in vertsDict[(x,y)]:
+        v.uv.x = currRowX + finalScaleX
+        v.uv.y = currRowY
+    
+    #rdcv, ldcv
+    x = round(ldcv.x, precision)
+    y = round(ldcv.y, precision)    
+    for v in vertsDict[(x,y)]:
+        v.uv.x = currRowX
+        v.uv.y = currRowY - finalScaleY
+        
+    x = round(rdcv.x, precision)
+    y = round(rdcv.y, precision)    
+    for v in vertsDict[(x,y)]:
+        v.uv.x = currRowX + finalScaleX
+        v.uv.y = currRowY - finalScaleY
+        
     return
 
 def SnapCursorToClosestSelected(filteredVerts):
@@ -349,18 +437,8 @@ def main1(context, callsNo = 0, respectShape = True, equalLine = True, horizonta
     
         #sym UvSquares
 def main2(context, respectShape = True):
-    startTime = time.clock()
-    
-    obj = context.active_object
-    me = obj.data
-    bm = bmesh.from_edit_mesh(me)
-    uv_layer = bm.loops.layers.uv.verify()
-    bm.faces.layers.tex.verify()
-    
-    selVerts, filteredVerts, selFaces, edgeFaces, vertsDict= ListsOfVerts(uv_layer, bm, startTime) 
-    lucv, ldcv, rucv, rdcv = Corners(selVerts, filteredVerts[:], selFaces, vertsDict)    
-    
-    setTo = CursorClosestTo([lucv, ldcv, rdcv, rucv])
+   
+    '''setTo = CursorClosestTo([lucv, ldcv, rdcv, rucv])
     if setTo is None: 
         setTo.x, setTo.y = lucv.x, lucv.y 
     SetAll2dCursorsTo(setTo.x, setTo.y)
@@ -369,6 +447,8 @@ def main2(context, respectShape = True):
     main1(context, 0, respectShape, False)    
     SetAll2dCursorsTo(setTo.x, setTo.y)
     SymmetrySelected("X", "CURSOR")
+    '''    
+
     return
     
 #face rip    
@@ -412,12 +492,7 @@ def main6(context):
     main1(context)
     return
 
-def ErrorFinished(message = ""):
-    print("--error:", message)
-    return    
-
 def SuccessFinished(me, startTime):
-    bmesh.update_edit_mesh(me)
     #use for backtrack of steps 
     #bpy.ops.ed.undo_push()
     elapsed = round(time.clock()-startTime, 2)
@@ -580,122 +655,24 @@ def ScaleTo0(axis):
     bpy.context.space_data.pivot_point = last_pivot
     return
 
-def MakeUvFacesEqualRectangles(uv_layer, vertsDict, edgeFaces, array2dOfVerts, lucv, ldcv, rucv, rdcv, startv):
-    rowNumber = len(array2dOfVerts) +1 #number of faces +1 equals number of rows, same for column
-    colNumber = len(array2dOfVerts[0]) +1
-    
-    if startv is None:
-        startv = lucv
-   
-    if startv is lucv: 
-        initDistance = rucv.x - lucv.x
-        finalScale = initDistance / (colNumber - 1)     
-        currRowX = lucv.x
-        currRowY = lucv.y
-    
-    elif startv is rucv:
-        initDistance = rucv.y - rdcv.y
-        finalScale = initDistance / (rowNumber -1)    
-        currRowX = rucv.x - finalScale*(colNumber-1)   
-        currRowY = rucv.y
-       
-    elif startv is rdcv:
-        initDistance = rdcv.x - ldcv.x
-        finalScale = initDistance / (colNumber - 1)     
-        currRowX = rdcv.x - finalScale*(colNumber -1)
-        currRowY = rdcv.y + finalScale*(rowNumber -1)
-        
-    else:
-        initDistance = lucv.y - ldcv.y
-        finalScale = initDistance /(rowNumber-1) 
-        currRowX = ldcv.x
-        currRowY = ldcv.y +finalScale*(rowNumber-1)
 
-    
-    #we add verts of first closest faces, otherwise the selection would rip
-    for f in edgeFaces:
-        for l in f.face.loops:
-            luv = l[uv_layer]
-            x = round(luv.uv.x, precision)
-            y = round(luv.uv.y, precision)
-            
-            vertsDict[(x,y)].append(luv)
-    
-    #here we select only first rows upper left and right
-    for face in array2dOfVerts[0]:
-        x = round(face.leftUpVert.x, precision)
-        y = round(face.leftUpVert.y, precision)
-        for v in vertsDict[(x,y)]:
-            v.uv.x = currRowX
-            v.uv.y = currRowY
-            v.select = True
-        
-        x = round(face.rightUpVert.x, precision)
-        y = round(face.rightUpVert.y, precision)    
-        for v in vertsDict[(x,y)]:
-            v.uv.x = currRowX + finalScale
-            v.uv.y = currRowY
-            v.select = True
-        
-        currRowX = currRowX + finalScale
-    currRowX = lucv.x
-       
-    #and now we can select only the bottom left and right ones        
-    for row in array2dOfVerts:
-        for face in row:
+def hypotVert(v1, v2):
+    hyp = hypot(v1.x - v2.x, v1.y - v2.y)
+    return hyp
 
-            x = round(face.leftDownVert.x, precision)
-            y = round(face.leftDownVert.y, precision)    
-            for v in vertsDict[(x,y)]:
-                v.uv.x = currRowX
-                v.uv.y = currRowY - finalScale
-                v.select = True
-
-            x = round(face.rightDownVert.x, precision)
-            y = round(face.rightDownVert.y, precision)    
-            for v in vertsDict[(x,y)]:
-                v.uv.x = currRowX + finalScale
-                v.uv.y = currRowY - finalScale
-                v.select = True
-                        
-            currRowX = currRowX + finalScale
-                     
-        currRowX = lucv.x
-        currRowY = currRowY - finalScale
-
-    return
-
-def Corners(selVerts, filteredVerts, selFaces, vertsDict):
-    #corners.append(filter by vectors that share location)
-    corners = filteredVerts
-    
-    #if there are only 4 "click selected" vertices ('corners' is here holder for filtered selVerts) 
-    if len(corners) is 4:
-        selVerts[:] = []
-        selVerts.extend(corners)
-        
-    else:
-        corners = []
-            
-        for v in vertsDict:
-            if len(vertsDict[v]) is 1:
-                corners.append(vertsDict[v][0].uv)
-    
-    if len(corners) is not 4:
-        return None, None, None, None
-    
+def Corners(corners):
     firstHighest = corners[0]
     for c in corners:
-        if c.y > firstHighest.y:
+        if c.uv.y > firstHighest.uv.y:
             firstHighest = c    
     corners.remove(firstHighest)
     
     secondHighest = corners[0]
     for c in corners:
-        if (c.y > secondHighest.y):
+        if (c.uv.y > secondHighest.uv.y):
             secondHighest = c
     
-    if firstHighest.x < secondHighest.x:
+    if firstHighest.uv.x < secondHighest.uv.x:
         leftUp = firstHighest
         rightUp = secondHighest
     else:
@@ -706,7 +683,7 @@ def Corners(selVerts, filteredVerts, selFaces, vertsDict):
     firstLowest = corners[0]
     secondLowest = corners[1]
     
-    if firstLowest.x < secondLowest.x:
+    if firstLowest.uv.x < secondLowest.uv.x:
         leftDown = firstLowest
         rightDown = secondLowest
     else:
@@ -714,150 +691,6 @@ def Corners(selVerts, filteredVerts, selFaces, vertsDict):
         rightDown = firstLowest
     
     return leftUp, leftDown, rightUp, rightDown
-
-
-def RotateSelCornerFaceUntilCornerIsHor(uv_layer, verts, side, corner):
-    rotations = 0
-    #angle = 43.11 # 45-1 to break symetry and -1 not to restrict to even angles, +0.11 if the verts are really close, so it will stack up until they meet requirement
-    angle = 43.11   
-    allowedRotations = 200
-        
-    isHor = False
-    while isHor is False:
-        isHor = IsCornerOfCornerFaceHorizontal(uv_layer, verts, side, corner)
-        
-        if (rotations >=allowedRotations):
-            print("exceeded max allowed rotations")
-            return rotations*angle
-            
-        if isHor is False:   
-            RotateSelected(angle)
-            rotations = rotations +1
-                         
-    return rotations*angle
-
-def IsCornerOfCornerFaceHorizontal(uv_layer, verts, side, corner):
-    allowedError = 0.01
-   
-    if side is "leftUp" or side is "rightUp":
-        firstHighest = verts[0]
-        for v in verts:
-            if (v.y > firstHighest.y):
-                firstHighest = v
-                
-        secondHighest = verts[0]
-        if AreVectorsQuasiEqual(firstHighest, secondHighest):
-            secondHighest = verts[1]
-        for v in verts:
-            if AreVectorsQuasiEqual(v, firstHighest) is False:
-                if(v.y > secondHighest.y):
-                    secondHighest = v
-                
-        if abs(firstHighest.y - secondHighest.y) > allowedError:
-            return False
-        
-        if AreVectorsQuasiEqual(corner, firstHighest):
-            if side is "leftUp":
-                if firstHighest.x < secondHighest.x:
-                    return True
-            if side is "rightUp":
-                if firstHighest.x > secondHighest.x:
-                    return True
-                
-        elif AreVectorsQuasiEqual(corner, secondHighest):
-            if side is "leftUp":
-                if secondHighest.x < firstHighest.x:
-                    return True
-            if side is "rightUp":
-                if secondHighest.x > firstHighest.x:
-                    return True
-          
-    elif side is "leftDown" or side is "rightDown":
-        firstLowest = verts[0]
-        for v in verts:
-            if (v.y < firstLowest.y):
-                firstLowest = v
-        
-        secondLowest = verts[0]
-        if AreVectorsQuasiEqual(firstLowest, secondLowest):
-            secondLowest = verts[1]
-        for v in verts:
-            if AreVectorsQuasiEqual(v, firstLowest) is False:
-                if(v.y < secondLowest.y):
-                    secondLowest = v
-        
-        if abs(firstLowest.y - secondLowest.y) > allowedError:
-            return False
-        
-        if AreVectorsQuasiEqual(corner, firstLowest):
-            if side is "leftDown":
-                if firstLowest.x < secondLowest.x:
-                    return True
-            if side is "rightDown":
-                if firstLowest.x > secondLowest.x:
-                    return True
-                
-        elif AreVectorsQuasiEqual(corner, secondLowest):
-            if side is "leftDown":
-                if secondLowest.x < firstLowest.x:
-                    return True
-            if side is "rightDown":
-                if secondLowest.x > firstLowest.x:
-                    return True
-                    
-    return False
-
-def RotateSelFaceUntil2CornersAreOnAxis(side, corner1, corner2):
-    rotations = 0
-    #angle = 43.11 # 45-1 to break symetry and -1 not to restrict to even angles, +0.11 if the verts are really close, so it will stack up until they meet requirement
-    angle = 43.11   
-    totalAngle = 0
-    allowedRotations = 200
-    #if side is "lefUp" or side is "rightDown":
-    #   angle = -angle
-        
-    isHor = False
-    while isHor is False:
-        
-        isHor = Are2CornersOnAxis(side, corner1, corner2)
-        
-        rotations = rotations +1
-        
-        if (rotations >=allowedRotations):
-            print("exceeded max allowed rotations")
-            return rotations*angle
-            
-        if isHor is False:
-            c1Xlessc2XBefore = corner1.x < corner2.x
-            c1Ylessc2YBefore = corner1.y < corner2.y
-            
-            RotateSelected(angle)
-            totalAngle = totalAngle + angle
-            
-            c1Xlessc2XAfter = corner1.x < corner2.x
-            c1Ylessc2YAfter = corner1.y < corner2.y
-            
-            if side is "toRight":
-                if (c1Xlessc2XBefore == c1Xlessc2XAfter) is False:
-                    angle = -angle/2.0
-            else:
-                if (c1Ylessc2YBefore == c1Ylessc2YAfter) is False:
-                    angle = -angle/2.0
-                 
-    return totalAngle
-
-def Are2CornersOnAxis(side, corner1, corner2):
-    allowedError = 0.01
- 
-    if side is "toRight":
-        if abs(corner1.x - corner2.x) < allowedError:
-            return True
-    
-    elif side is "toDown":
-        if abs(corner1.y - corner2.y) < allowedError:
-            return True
-    
-    return False
 
 def CursorClosestTo(verts, allowedError = 0.025):
     ratioX, ratioY = 255, 255
