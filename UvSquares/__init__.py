@@ -34,11 +34,9 @@ import time
 allowedFaces = 2200 
 precision = 3
 
-#todo: deselect vertices out of targetFace island
 #todo: set scale when image ratio is not 1:1
 #todo: make joining radius scale with editor zoom rate or average unit length
 #todo: align to axis by respect to vert distance
-#todo: test and set face count limit
 #todo: snap 2dCursor to closest selected vert (when more vertices are selected
 
 def main(context, square = False, snapToClosest = False):
@@ -93,7 +91,8 @@ def main(context, square = False, snapToClosest = False):
     #edge has ripped so we connect it back 
     for ev in edgeVerts:
         x, y = round(ev.uv.x, precision), round(ev.uv.y, precision)
-        ev.uv = vertsDict[(x,y)][0].uv
+        if len(vertsDict[(x,y)]) is not 0:
+            ev.uv = vertsDict[(x,y)][0].uv
     
     return SuccessFinished(me, startTime)
 
