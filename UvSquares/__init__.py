@@ -42,7 +42,7 @@ precision = 3
 #todo: test and set face count limit
 #todo: snap 2dCursor to closest selected vert (when more vertices are selected
 
-def main(context, sym = False, square = False, snapToClosest = False):
+def main(context, square = False, snapToClosest = False):
     startTime = time.clock()
     obj = context.active_object
     me = obj.data
@@ -87,9 +87,10 @@ def main(context, sym = False, square = False, snapToClosest = False):
     if isTargetSel is False:
         targetFace = selFaces[2]
         
-    ShapeFace(uv_layer, targetFace, vertsDict, sym, square)
+    ShapeFace(uv_layer, targetFace, vertsDict, square)
 
-    FollowActiveUV(me, targetFace, selFaces)
+    if square: FollowActiveUV(me, targetFace, selFaces, 'EVEN')
+    else: FollowActiveUV(me, targetFace, selFaces)
     
     #edge has ripped so we connect it back 
     for ev in edgeVerts:
@@ -99,7 +100,7 @@ def main(context, sym = False, square = False, snapToClosest = False):
     return SuccessFinished(me, startTime)
 
 
-def ShapeFace(uv_layer, targetFace, vertsDict, sym, square):
+def ShapeFace(uv_layer, targetFace, vertsDict, square):
     corners = []
     for l in targetFace.loops:
         luv = l[uv_layer]
@@ -194,7 +195,7 @@ def SnapCursorToClosestSelected(filteredVerts):
     
     return
 
-def ListsOfVerts(uv_layer, bm, startTime, targetFace):
+def ListsOfVerts(uv_layer, bm, startTime, targetFace = None):
     selVerts = []
     edgeVerts = []
     filteredVerts = []
@@ -426,35 +427,7 @@ def FollowActiveUV(me, f_act, faces, EXTEND_MODE = 'LENGTH_AVERAGE'):
     bmesh.update_edit_mesh(me, False)
 
 '''----------------------------------'''
-
-def main1(context, callsNo = 0, respectShape = True, equalLine = True, horizontal = None):
     
-    main(context)
-    
-    return
- 
-   
-    
-        #sym UvSquares
-def main2(context, respectShape = True):
-   
-    
-    return
-    
-#face rip    
-def main3(context):
-    startTime = time.clock()
-    
-    obj = context.active_object
-    me = obj.data
-    bm = bmesh.from_edit_mesh(me)
-    
-    uv_layer = bm.loops.layers.uv.verify()
-    bm.faces.layers.tex.verify()  # currently blender needs both layers.
-    
-    RipUvFaces(uv_layer, bm)
-    return SuccessFinished(me, startTime)
-
 #face join
 def main4(context):
     startTime = time.clock()
@@ -750,7 +723,16 @@ def AreVertsQuasiEqual(v1, v2, allowedError = 0.0009):
         return True
     return False
 
-def RipUvFaces(uv_layer, bm):
+def RipUvFaces(context):
+    startTime = time.clock()
+    
+    obj = context.active_object
+    me = obj.data
+    bm = bmesh.from_edit_mesh(me)
+    
+    uv_layer = bm.loops.layers.uv.verify()
+    bm.faces.layers.tex.verify()  # currently blender needs both layers.
+       
     selFaces = []
     
     for f in bm.faces:
@@ -789,7 +771,7 @@ def RipUvFaces(uv_layer, bm):
             luv = l[uv_layer]
             luv.select = True
     
-    return
+    return SuccessFinished(me, startTime)
 
 def JoinUvFaces(uv_layer, bm, selVerts, filteredVerts, vertsDict, radius = 0.02):
     for f in bm.faces:
@@ -834,13 +816,13 @@ class UvSquares(bpy.types.Operator):
         return (context.mode == 'EDIT_MESH')
 
     def execute(self, context):
-        main1(context, 0, False)
+        main(context, True)
         bpy.ops.ed.undo_push()
         return {'FINISHED'}
 
-class UvGridByShape(bpy.types.Operator):
-    """Reshapes UV faces to a grid with respect to shape by distance of verts of edges around selected corner"""
-    bl_idname = "uv.uv_respect_shape"
+class UvSquaresByShape(bpy.types.Operator):
+    """Reshapes UV faces to a grid with respect to shape by length of edges around selected corner"""
+    bl_idname = "uv.uv_squares_by_shape"
     bl_label = "UVs to grid with respect to shape"
 
     @classmethod
@@ -848,37 +830,9 @@ class UvGridByShape(bpy.types.Operator):
         return (context.mode == 'EDIT_MESH')
 
     def execute(self, context):
-        main1(context)
+        main(context)
         bpy.ops.ed.undo_push()
-        return {'FINISHED'}
-    
-class SymUvGridByShape(bpy.types.Operator):
-    """Same as UvGridByShape but in anti-clockwise direction"""
-    bl_idname = "uv.sym_uv_respect_shape"
-    bl_label = "UVs to grid in anti-clockwise with respect to shape"
-
-    @classmethod
-    def poll(cls, context):
-        return (context.mode == 'EDIT_MESH')
-
-    def execute(self, context):
-        main2(context)
-        bpy.ops.ed.undo_push()
-        return {'FINISHED'}
-    
-class SymUvSquares(bpy.types.Operator):
-    """Same as UvGridByShape just takes counter-clockwise direction for length"""
-    bl_idname = "uv.sym_uv_squares"
-    bl_label = "UVs to grid (sym - X)"
-
-    @classmethod
-    def poll(cls, context):
-        return (context.mode == 'EDIT_MESH')
-
-    def execute(self, context):
-        main2(context, False)
-        bpy.ops.ed.undo_push()
-        return {'FINISHED'}
+        return {'FINISHED'}    
 
 class RipFaces(bpy.types.Operator):
     """Rip UV faces apart"""
@@ -890,7 +844,7 @@ class RipFaces(bpy.types.Operator):
         return (context.mode == 'EDIT_MESH')
 
     def execute(self, context):
-        main3(context)
+        RipUvFaces(context)
         bpy.ops.ed.undo_push()
         return {'FINISHED'}
 
@@ -918,7 +872,7 @@ class SnapToAxis(bpy.types.Operator):
         return (context.mode == 'EDIT_MESH')
 
     def execute(self, context):
-        main5(context)
+        main(context)
         bpy.ops.ed.undo_push()
         return {'FINISHED'}
 
@@ -932,16 +886,15 @@ class SnapToAxisWithEqual(bpy.types.Operator):
         return (context.mode == 'EDIT_MESH')
 
     def execute(self, context):
-        main6(context)
+        main(context)
+        main(context)
         bpy.ops.ed.undo_push()
         return {'FINISHED'}
 
 addon_keymaps = []
 
 def menu_func_uv_squares(self, context): self.layout.operator(UvSquares.bl_idname)
-def menu_func_uv_grid_by_shape(self, context): self.layout.operator(UvGridByShape.bl_idname)
-def menu_func_sym_uv_grid_by_shape(self, context): self.layout.operator(UvGridByShape.bl_idname)
-def menu_func_sym_uv_squares(self, context): self.layout.operator(SymUvSquares.bl_idname)
+def menu_func_uv_squares_by_shape(self, context): self.layout.operator(UvSquaresByShape.bl_idname)
 def menu_func_face_rip(self, context): self.layout.operator(RipFaces.bl_idname)
 def menu_func_face_join(self, context): self.layout.operator(JoinFaces.bl_idname)
     
@@ -965,18 +918,18 @@ class UvSquaresPanel(bpy.types.Panel):
         row.label(text="Convert \"Rectangle\" (4 corners):")
         split = layout.split()
         col = split.column(align=True)
-        col.operator(UvGridByShape.bl_idname, text="To Grid By Shape", icon = "GRID")
+        col.operator(UvSquaresByShape.bl_idname, text="To Grid By Shape", icon = "GRID")
         col.operator(UvSquares.bl_idname, text="To Square Grid", icon = "UV_FACESEL")
       
         split = layout.split()
         col = split.column(align=True)
         row = col.row(align=True)
         
-        row.operator(SymUvGridByShape.bl_idname, text="Shape")
+        '''row.operator(SymUvGridByShape.bl_idname, text="Shape")
         row.operator(SymUvSquares.bl_idname, text="Square")
     
         row.label(text="anti", icon = "RECOVER_LAST")
-        row.label(text="-cw")
+        row.label(text="-cw")'''
         
       
         row = layout.row()
@@ -996,9 +949,7 @@ class UvSquaresPanel(bpy.types.Panel):
 def register():
     bpy.utils.register_class(UvSquaresPanel)
     bpy.utils.register_class(UvSquares)
-    bpy.utils.register_class(UvGridByShape)
-    bpy.utils.register_class(SymUvGridByShape)
-    bpy.utils.register_class(SymUvSquares)
+    bpy.utils.register_class(UvSquaresByShape)
     bpy.utils.register_class(RipFaces)
     bpy.utils.register_class(JoinFaces)
     bpy.utils.register_class(SnapToAxis)
@@ -1006,9 +957,7 @@ def register():
 	
     #menu
     bpy.types.IMAGE_MT_uvs.append(menu_func_uv_squares)
-    bpy.types.IMAGE_MT_uvs.append(menu_func_uv_grid_by_shape)
-    bpy.types.IMAGE_MT_uvs.append(menu_func_sym_uv_grid_by_shape)
-    bpy.types.IMAGE_MT_uvs.append(menu_func_sym_uv_squares)
+    bpy.types.IMAGE_MT_uvs.append(menu_func_uv_squares_by_shape)
     bpy.types.IMAGE_MT_uvs.append(menu_func_face_rip)
     bpy.types.IMAGE_MT_uvs.append(menu_func_face_join)
 
@@ -1016,12 +965,12 @@ def register():
     wm = bpy.context.window_manager
     
     km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
-    kmi = km.keymap_items.new(UvGridByShape.bl_idname, 'E', 'PRESS', alt=True)
+    kmi = km.keymap_items.new(UvSquaresByShape.bl_idname, 'E', 'PRESS', alt=True)
     addon_keymaps.append((km, kmi))
     
-    km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
+    '''km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
     kmi = km.keymap_items.new(SymUvGridByShape.bl_idname, 'E', 'PRESS', alt=True, shift=True)
-    addon_keymaps.append((km, kmi))
+    addon_keymaps.append((km, kmi))'''
     
     km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
     kmi = km.keymap_items.new(RipFaces.bl_idname, 'V', 'PRESS', alt=True)
@@ -1036,18 +985,14 @@ def register():
 def unregister():
     bpy.utils.unregister_class(UvSquaresPanel)
     bpy.utils.unregister_class(UvSquares)
-    bpy.utils.unregister_class(UvGridByShape)
-    bpy.utils.unregister_class(SymUvGridByShape)
-    bpy.utils.unregister_class(SymUvSquares)
+    bpy.utils.unregister_class(UvSquaresByShape)
     bpy.utils.unregister_class(RipFaces)
     bpy.utils.unregister_class(JoinFaces)
     bpy.utils.unregister_class(SnapToAxis)
     bpy.utils.unregister_class(SnapToAxisWithEqual)
     
     bpy.types.IMAGE_MT_uvs.remove(menu_func_uv_squares)
-    bpy.types.IMAGE_MT_uvs.remove(menu_func_uv_grid_by_shape)
-    bpy.types.IMAGE_MT_uvs.remove(menu_func_sym_uv_grid_by_shape)
-    bpy.types.IMAGE_MT_uvs.remove(menu_func_sym_uv_squares)
+    bpy.types.IMAGE_MT_uvs.remove(menu_func_uv_squares_by_shape)
     bpy.types.IMAGE_MT_uvs.remove(menu_func_face_rip)
     bpy.types.IMAGE_MT_uvs.remove(menu_func_face_join)
     
