@@ -17,7 +17,7 @@ bl_info = {
     "name": "UV Squares",
     "description": "UV Editor tool for reshaping selection to grid.",
     "author": "Reslav Hollos",
-    "version": (1, 3, 99),
+    "version": (1, 3, 992),
     "blender": (2, 71, 0),
     "category": "Mesh",
     #"location": "UV Image Editor > UVs > UVs to grid of squares",
@@ -39,8 +39,9 @@ precision = 3
 #todo: align to axis by respect to vert distance
 #todo: snap 2dCursor to closest selected vert (when more vertices are selected
 #todo: rip different vertex on each press
+#todo: skip to first quad if active face is tris
 
-def main(context, square = False, snapToClosest = False):
+def main(context, operator, square = False, snapToClosest = False):
     startTime = time.clock()
     obj = context.active_object
     me = obj.data
@@ -48,14 +49,14 @@ def main(context, square = False, snapToClosest = False):
     uv_layer = bm.loops.layers.uv.verify()
     bm.faces.layers.tex.verify()  # currently blender needs both layers.
     #
-    face_act = bm.faces.active
+    face_act = bm.faces.active    
     targetFace = face_act
-    
+        
     if len(bm.faces) > allowedFaces:
-        print("selected more than " +str(allowedFaces) +" allowed faces.")
+        operator.report({'ERROR'}, "selected more than " +str(allowedFaces) +" allowed faces.")
         return 
     
-    selVerts, edgeVerts, filteredVerts, selFaces, vertsDict, isTargetSel = ListsOfVerts(uv_layer, bm, targetFace)
+    selVerts, edgeVerts, filteredVerts, selFaces, trisFaces, vertsDict, isTargetSel = ListsOfVerts(uv_layer, bm, targetFace)
     
     if len(selVerts) is 0: return 
     if len(filteredVerts) is 1: 
@@ -84,10 +85,10 @@ def main(context, square = False, snapToClosest = False):
     if isTargetSel is False:
         targetFace = selFaces[0]
         
-    ShapeFace(uv_layer, targetFace, vertsDict, square)
+    ShapeFace(uv_layer, operator, targetFace, vertsDict, square)
 
     if square: FollowActiveUV(me, targetFace, selFaces, 'EVEN')
-    else: FollowActiveUV(me, targetFace, selFaces)
+    else: FollowActiveUV(operator, me, targetFace, selFaces)
     
     #edge has ripped so we connect it back 
     for ev in edgeVerts:
@@ -98,11 +99,15 @@ def main(context, square = False, snapToClosest = False):
     return SuccessFinished(me, startTime)
 
 
-def ShapeFace(uv_layer, targetFace, vertsDict, square):
+def ShapeFace(uv_layer, operator, targetFace, vertsDict, square):
     corners = []
     for l in targetFace.loops:
         luv = l[uv_layer]
         corners.append(luv)
+    
+    if len(corners) is not 4: 
+        #operator.report({'ERROR'}, "bla")
+        return
     
     lucv, ldcv, rucv, rdcv = Corners(corners)
     
@@ -198,9 +203,13 @@ def ListsOfVerts(uv_layer, bm, targetFace = None):
     edgeVerts = []
     filteredVerts = []
     selFaces = []
+    nonQuadFaces = []
     vertsDict = defaultdict(list)                #dict
     isTargetSel = False
-    for f in bm.faces:      
+    for f in bm.faces:
+        if len(f.verts) is not 4:
+            nonQuadFaces.append(f)
+            
         isFaceSel = True
         isFaceContainSelV = False
         for l in f.loops:
@@ -235,10 +244,10 @@ def ListsOfVerts(uv_layer, bm, targetFace = None):
     
     [filteredVerts.append(v) for v in selVerts if CountQuasiEqualVerts(v, filteredVerts) is 0]
 
-    return selVerts, edgeVerts, filteredVerts, selFaces, vertsDict, isTargetSel
+    return selVerts, edgeVerts, filteredVerts, selFaces, nonQuadFaces, vertsDict, isTargetSel
 
 #modified ideasman42's uvcalc_follow_active.py
-def FollowActiveUV(me, f_act, faces, EXTEND_MODE = 'LENGTH_AVERAGE'):
+def FollowActiveUV(operator, me, f_act, faces, EXTEND_MODE = 'LENGTH_AVERAGE'):
     bm = bmesh.from_edit_mesh(me)
     uv_act = bm.loops.layers.uv.active
 
@@ -388,6 +397,9 @@ def FollowActiveUV(me, f_act, faces, EXTEND_MODE = 'LENGTH_AVERAGE'):
         edge_lengths = [None] * len(bm.edges)   #NoneType times the length of edges list
         
         for f in faces:
+            if len(f.verts) is not 4: 
+                operator.report({'ERROR'}, "non-quad face detected")
+                return
             # we know its a quad
             l_quad = f.loops[:] 
             l_pair_a = (l_quad[0], l_quad[2])
@@ -425,9 +437,8 @@ def SuccessFinished(me, startTime):
     #use for backtrack of steps 
     #bpy.ops.ed.undo_push()
     bmesh.update_edit_mesh(me)
-    elapsed = round(time.clock()-startTime, 2)
-    if (elapsed >= 0.05):
-        print("Success! UvSquares has finished, elapsed time:", elapsed, "s.")
+    #elapsed = round(time.clock()-startTime, 2)
+    #if (elapsed >= 0.05): operator.report({'INFO'}, "UvSquares finished, elapsed:", elapsed, "s.")
     return
 
 def SymmetrySelected(axis, pivot = "MEDIAN"):
@@ -689,7 +700,7 @@ def AreVertsQuasiEqual(v1, v2, allowedError = 0.0009):
         return True
     return False
 
-def RipUvFaces(context):
+def RipUvFaces(context, operator):
     startTime = time.clock()
     
     obj = context.active_object
@@ -739,7 +750,7 @@ def RipUvFaces(context):
     
     return SuccessFinished(me, startTime)
 
-def JoinUvFaces(context):
+def JoinUvFaces(context, operator):
     startTime = time.clock()
     
     obj = context.active_object
@@ -798,7 +809,7 @@ class UvSquares(bpy.types.Operator):
         return (context.mode == 'EDIT_MESH')
 
     def execute(self, context):
-        main(context, True)
+        main(context, self, True)
         bpy.ops.ed.undo_push()
         return {'FINISHED'}
 
@@ -813,7 +824,7 @@ class UvSquaresByShape(bpy.types.Operator):
         return (context.mode == 'EDIT_MESH')
 
     def execute(self, context):
-        main(context)
+        main(context, self)
         return {'FINISHED'}    
 
 class RipFaces(bpy.types.Operator):
@@ -827,7 +838,7 @@ class RipFaces(bpy.types.Operator):
         return (context.mode == 'EDIT_MESH')
 
     def execute(self, context):
-        RipUvFaces(context)
+        RipUvFaces(context, self)
         return {'FINISHED'}
 
 class JoinFaces(bpy.types.Operator):
@@ -841,7 +852,7 @@ class JoinFaces(bpy.types.Operator):
         return (context.mode == 'EDIT_MESH')
 
     def execute(self, context):
-        JoinUvFaces(context)
+        JoinUvFaces(context, self)
         return {'FINISHED'}
     
 class SnapToAxis(bpy.types.Operator):
@@ -855,7 +866,7 @@ class SnapToAxis(bpy.types.Operator):
         return (context.mode == 'EDIT_MESH')
 
     def execute(self, context):
-        main(context)
+        main(context, self)
         return {'FINISHED'}
 
 class SnapToAxisWithEqual(bpy.types.Operator):
@@ -869,8 +880,8 @@ class SnapToAxisWithEqual(bpy.types.Operator):
         return (context.mode == 'EDIT_MESH')
 
     def execute(self, context):
-        main(context)
-        main(context)
+        main(context, self)
+        main(context, self)
         return {'FINISHED'}
 
 addon_keymaps = []
