@@ -38,6 +38,7 @@ precision = 3
 #todo: make joining radius scale with editor zoom rate or average unit length
 #todo: align to axis by respect to vert distance
 #todo: snap 2dCursor to closest selected vert (when more vertices are selected
+#todo: rip different vertex on each press
 
 def main(context, square = False, snapToClosest = False):
     startTime = time.clock()
@@ -199,7 +200,7 @@ def ListsOfVerts(uv_layer, bm, targetFace = None):
     selFaces = []
     vertsDict = defaultdict(list)                #dict
     isTargetSel = False
-    for f in bm.faces:          
+    for f in bm.faces:      
         isFaceSel = True
         isFaceContainSelV = False
         for l in f.loops:
@@ -388,7 +389,7 @@ def FollowActiveUV(me, f_act, faces, EXTEND_MODE = 'LENGTH_AVERAGE'):
         
         for f in faces:
             # we know its a quad
-            l_quad = f.loops[:]
+            l_quad = f.loops[:] 
             l_pair_a = (l_quad[0], l_quad[2])
             l_pair_b = (l_quad[1], l_quad[3])
 
@@ -805,6 +806,7 @@ class UvSquaresByShape(bpy.types.Operator):
     """Reshapes UV faces to a grid with respect to shape by length of edges around selected corner"""
     bl_idname = "uv.uv_squares_by_shape"
     bl_label = "UVs to grid with respect to shape"
+    bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
     def poll(cls, context):
@@ -812,13 +814,13 @@ class UvSquaresByShape(bpy.types.Operator):
 
     def execute(self, context):
         main(context)
-        bpy.ops.ed.undo_push()
         return {'FINISHED'}    
 
 class RipFaces(bpy.types.Operator):
     """Rip UV faces apart"""
     bl_idname = "uv.uv_face_rip"
     bl_label = "UV face rip"
+    bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
     def poll(cls, context):
@@ -826,13 +828,13 @@ class RipFaces(bpy.types.Operator):
 
     def execute(self, context):
         RipUvFaces(context)
-        bpy.ops.ed.undo_push()
         return {'FINISHED'}
 
 class JoinFaces(bpy.types.Operator):
     """Join selected UV faces to closest nonselected vertices"""
     bl_idname = "uv.uv_face_join"
     bl_label = "UV face join"
+    bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
     def poll(cls, context):
@@ -840,27 +842,27 @@ class JoinFaces(bpy.types.Operator):
 
     def execute(self, context):
         JoinUvFaces(context)
-        bpy.ops.ed.undo_push()
         return {'FINISHED'}
     
 class SnapToAxis(bpy.types.Operator):
     """Snap sequenced vertices to Axis"""
     bl_idname = "uv.uv_snap_to_axis"
     bl_label = "UV snap vertices to axis"
-
+    bl_options = {'REGISTER', 'UNDO'}
+    
     @classmethod
     def poll(cls, context):
         return (context.mode == 'EDIT_MESH')
 
     def execute(self, context):
         main(context)
-        bpy.ops.ed.undo_push()
         return {'FINISHED'}
 
 class SnapToAxisWithEqual(bpy.types.Operator):
     """Snap sequenced vertices to Axis with Equal Distance between"""
     bl_idname = "uv.uv_snap_to_axis_and_equal"
     bl_label = "UV snap vertices to axis with equal distance between"
+    bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
     def poll(cls, context):
@@ -869,7 +871,6 @@ class SnapToAxisWithEqual(bpy.types.Operator):
     def execute(self, context):
         main(context)
         main(context)
-        bpy.ops.ed.undo_push()
         return {'FINISHED'}
 
 addon_keymaps = []
@@ -995,3 +996,4 @@ if __name__ == "__main__":
 
 
  
+
