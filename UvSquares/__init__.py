@@ -33,7 +33,6 @@ import time
 
 precision = 3
 
-#todo: set scale when image ratio is not 1:1
 #todo: make joining radius scale with editor zoom rate or average unit length
 #todo: align to axis by respect to vert distance
 #todo: snap 2dCursor to closest selected vert (when more vertices are selected
@@ -53,7 +52,7 @@ def main(context, operator, square = False, snapToClosest = False):
     #if len(bm.faces) > allowedFaces:
     #    operator.report({'ERROR'}, "selected more than " +str(allowedFaces) +" allowed faces.")
     #   return 
-    
+
     edgeVerts, filteredVerts, selFaces, nonQuadFaces, vertsDict = ListsOfVerts(uv_layer, bm)
    
     if len(filteredVerts) is 0: return 
@@ -125,10 +124,14 @@ def ShapeFace(uv_layer, operator, targetFace, vertsDict, square):
     cct = CursorClosestTo([lucv, ldcv, rdcv, rucv])
     if cct is None: 
         cct.x, cct.y = lucv.x, lucv.y 
-    MakeUvFaceEqualRectangle(vertsDict, lucv, rucv, rdcv, ldcv, cct, square)
+    
+    rx, ry = ImageRatio()
+    MakeUvFaceEqualRectangle(vertsDict, lucv, rucv, rdcv, ldcv, cct, square, rx, ry)
     return
 
-def MakeUvFaceEqualRectangle(vertsDict, lucv, rucv, rdcv, ldcv, startv, square = False, ratio = 1):   
+def MakeUvFaceEqualRectangle(vertsDict, lucv, rucv, rdcv, ldcv, startv, square = False, ratioX = 255, ratioY = 255):
+    ratio = ratioX/ratioY
+    
     if startv is None: startv = lucv.uv
     elif AreVertsQuasiEqual(startv, rucv): startv = rucv.uv
     elif AreVertsQuasiEqual(startv, rdcv): startv = rdcv.uv
@@ -164,8 +167,7 @@ def MakeUvFaceEqualRectangle(vertsDict, lucv, rucv, rdcv, ldcv, startv, square =
         currRowX = ldcv.x
         currRowY = ldcv.y +finalScaleY
     
-    if square: finalScaleY = finalScaleX
-    
+    if square: finalScaleY = finalScaleX*ratio
     #lucv, rucv
     x = round(lucv.x, precision)
     y = round(lucv.y, precision)
@@ -191,6 +193,7 @@ def MakeUvFaceEqualRectangle(vertsDict, lucv, rucv, rdcv, ldcv, startv, square =
     for v in vertsDict[(x,y)]:
         v.uv.x = currRowX
         v.uv.y = currRowY - finalScaleY
+
         
     return
 
@@ -613,6 +616,16 @@ def Corners(corners):
     
     return leftUp, leftDown, rightUp, rightDown
 
+def ImageRatio():
+    ratioX, ratioY = 255,255
+    for a in bpy.context.screen.areas:
+        if a.type == 'IMAGE_EDITOR':
+            img = a.spaces[0].image
+            if img is not None and img.size[0] is not 0:
+                ratioX, ratioY = img.size[0], img.size[1]
+            break
+    return ratioX, ratioY
+
 def CursorClosestTo(verts, allowedError = 0.025):
     ratioX, ratioY = 255, 255
     for a in bpy.context.screen.areas:
@@ -979,4 +992,5 @@ if __name__ == "__main__":
 
 
  
+
 
