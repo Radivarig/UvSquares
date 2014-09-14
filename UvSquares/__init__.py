@@ -17,7 +17,7 @@ bl_info = {
     "name": "UV Squares",
     "description": "UV Editor tool for reshaping selection to grid.",
     "author": "Reslav Hollos",
-    "version": (1, 3, 992),
+    "version": (1, 3, 993),
     "blender": (2, 71, 0),
     "category": "Mesh",
     #"location": "UV Image Editor > UVs > UVs to grid of squares",
@@ -54,7 +54,7 @@ def main(context, operator, square = False, snapToClosest = False):
     #   return 
 
     edgeVerts, filteredVerts, selFaces, nonQuadFaces, vertsDict = ListsOfVerts(uv_layer, bm)
-   
+       
     if len(filteredVerts) is 0: return 
     if len(filteredVerts) is 1: 
         SnapCursorToClosestSelected(filteredVerts)
@@ -125,11 +125,11 @@ def ShapeFace(uv_layer, operator, targetFace, vertsDict, square):
     if cct is None: 
         cct.x, cct.y = lucv.x, lucv.y 
     
-    rx, ry = ImageRatio()
-    MakeUvFaceEqualRectangle(vertsDict, lucv, rucv, rdcv, ldcv, cct, square, rx, ry)
+    MakeUvFaceEqualRectangle(vertsDict, lucv, rucv, rdcv, ldcv, cct, square)
     return
 
-def MakeUvFaceEqualRectangle(vertsDict, lucv, rucv, rdcv, ldcv, startv, square = False, ratioX = 255, ratioY = 255):
+def MakeUvFaceEqualRectangle(vertsDict, lucv, rucv, rdcv, ldcv, startv, square = False):
+    ratioX, ratioY = ImageRatio()
     ratio = ratioX/ratioY
     
     if startv is None: startv = lucv.uv
@@ -617,7 +617,7 @@ def Corners(corners):
     return leftUp, leftDown, rightUp, rightDown
 
 def ImageRatio():
-    ratioX, ratioY = 255,255
+    ratioX, ratioY = 256,256
     for a in bpy.context.screen.areas:
         if a.type == 'IMAGE_EDITOR':
             img = a.spaces[0].image
@@ -627,13 +627,7 @@ def ImageRatio():
     return ratioX, ratioY
 
 def CursorClosestTo(verts, allowedError = 0.025):
-    ratioX, ratioY = 255, 255
-    for a in bpy.context.screen.areas:
-        if a.type == 'IMAGE_EDITOR':
-            img = a.spaces[0].image
-            if img is not None and img.size[0] is not 0:
-                ratioX, ratioY = img.size[0], img.size[1]
-            break
+    ratioX, ratioY = ImageRatio()
     
     #any length that is certantly not smaller than distance of the closest
     min = 1000
