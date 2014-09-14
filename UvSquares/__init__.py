@@ -81,7 +81,7 @@ def main(context, operator, square = False, snapToClosest = False):
     #else:
     
     #active face checks
-    if targetFace.select is False or len(targetFace.verts) is not 4:
+    if targetFace is None or targetFace.select is False or len(targetFace.verts) is not 4:
         targetFace = selFaces[0]
     else:
         for l in targetFace.loops:
