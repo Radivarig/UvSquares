@@ -31,7 +31,6 @@ from collections import defaultdict
 from math import radians, hypot
 import time
 
-allowedFaces = 2200 
 precision = 3
 
 #todo: set scale when image ratio is not 1:1
@@ -39,7 +38,6 @@ precision = 3
 #todo: align to axis by respect to vert distance
 #todo: snap 2dCursor to closest selected vert (when more vertices are selected
 #todo: rip different vertex on each press
-#todo: skip to first quad if active face is tris
 
 def main(context, operator, square = False, snapToClosest = False):
     startTime = time.clock()
@@ -48,29 +46,30 @@ def main(context, operator, square = False, snapToClosest = False):
     bm = bmesh.from_edit_mesh(me)
     uv_layer = bm.loops.layers.uv.verify()
     bm.faces.layers.tex.verify()  # currently blender needs both layers.
-    #
+
     face_act = bm.faces.active    
     targetFace = face_act
         
-    if len(bm.faces) > allowedFaces:
-        operator.report({'ERROR'}, "selected more than " +str(allowedFaces) +" allowed faces.")
-        return 
+    #if len(bm.faces) > allowedFaces:
+    #    operator.report({'ERROR'}, "selected more than " +str(allowedFaces) +" allowed faces.")
+    #   return 
     
-    selVerts, edgeVerts, filteredVerts, selFaces, trisFaces, vertsDict, isTargetSel = ListsOfVerts(uv_layer, bm, targetFace)
-    
-    if len(selVerts) is 0: return 
+    edgeVerts, filteredVerts, selFaces, nonQuadFaces, vertsDict = ListsOfVerts(uv_layer, bm)
+   
+    if len(filteredVerts) is 0: return 
     if len(filteredVerts) is 1: 
         SnapCursorToClosestSelected(filteredVerts)
         return 
     
     cursorClosestTo = CursorClosestTo(filteredVerts)
     #line is selected
+    
     if len(selFaces) is 0:
         if snapToClosest is True:
             SnapCursorToClosestSelected(filteredVerts)
             return
         
-        VertsDictForLine(uv_layer, bm, selVerts, vertsDict)
+        VertsDictForLine(uv_layer, bm, filteredVerts, vertsDict)
         
         if AreVectsLinedOnAxis(filteredVerts) is False:
             ScaleTo0OnAxisAndCursor(filteredVerts, vertsDict, cursorClosestTo)
@@ -82,19 +81,31 @@ def main(context, operator, square = False, snapToClosest = False):
    
     #else:
     
-    if isTargetSel is False:
+    #active face checks
+    if targetFace.select is False or len(targetFace.verts) is not 4:
         targetFace = selFaces[0]
-        
+    else:
+        for l in targetFace.loops:
+            if l[uv_layer].select is False: 
+                targetFace = selFaces[0]
+                break 
+            
     ShapeFace(uv_layer, operator, targetFace, vertsDict, square)
-
-    if square: FollowActiveUV(me, targetFace, selFaces, 'EVEN')
+    
+    for nf in nonQuadFaces:
+        for l in nf.loops:
+            luv = l[uv_layer]
+            luv.select = False
+        
+    if square: FollowActiveUV(operator, me, targetFace, selFaces, 'EVEN')
     else: FollowActiveUV(operator, me, targetFace, selFaces)
     
     #edge has ripped so we connect it back 
     for ev in edgeVerts:
-        x, y = round(ev.uv.x, precision), round(ev.uv.y, precision)
-        if len(vertsDict[(x,y)]) is not 0:
-            ev.uv = vertsDict[(x,y)][0].uv
+        key = (round(ev.uv.x, precision), round(ev.uv.y, precision))
+        if key in vertsDict:
+            ev.uv = vertsDict[key][0].uv
+            ev.select = True
     
     return SuccessFinished(me, startTime)
 
@@ -111,18 +122,10 @@ def ShapeFace(uv_layer, operator, targetFace, vertsDict, square):
     
     lucv, ldcv, rucv, rdcv = Corners(corners)
     
-    #we set cursor to startV so sym can work
-    setTo = CursorClosestTo([lucv, ldcv, rdcv, rucv])
-    if setTo is None: 
-        setTo.x, setTo.y = lucv.x, lucv.y 
-    SetAll2dCursorsTo(setTo.uv.x, setTo.uv.y)
-    
-    #todo: fix sym sqaring and corner squaring
-    #sym = True
-    #if sym: SymmetrySelected("X", "CURSOR")
-    MakeUvFaceEqualRectangle(vertsDict, lucv, rucv, rdcv, ldcv, setTo, square)
-    #if sym: SymmetrySelected("X", "CURSOR")
-  
+    cct = CursorClosestTo([lucv, ldcv, rdcv, rucv])
+    if cct is None: 
+        cct.x, cct.y = lucv.x, lucv.y 
+    MakeUvFaceEqualRectangle(vertsDict, lucv, rucv, rdcv, ldcv, cct, square)
     return
 
 def MakeUvFaceEqualRectangle(vertsDict, lucv, rucv, rdcv, ldcv, startv, square = False, ratio = 1):   
@@ -198,73 +201,52 @@ def SnapCursorToClosestSelected(filteredVerts):
     
     return
 
-def ListsOfVerts(uv_layer, bm, targetFace = None):
-    selVerts = []
+def ListsOfVerts(uv_layer, bm):
     edgeVerts = []
     filteredVerts = []
     selFaces = []
     nonQuadFaces = []
     vertsDict = defaultdict(list)                #dict
-    isTargetSel = False
+    
     for f in bm.faces:
-        if len(f.verts) is not 4:
-            nonQuadFaces.append(f)
-            
         isFaceSel = True
-        isFaceContainSelV = False
+        facesEdgeVerts = []
+        if (f.select == False):
+            continue
+        
+        #collect edge verts if any
         for l in f.loops:
             luv = l[uv_layer]
-            if luv.select is False:
-                isFaceSel = False
-            else:
-                isFaceContainSelV = True
-                selVerts.append(luv)
-    
-        if isFaceSel is True:
-            if (f == targetFace): 
-                isTargetSel = True
-
-            for l in f.loops:
-                luv = l[uv_layer]
+            if luv.select is True:
+                facesEdgeVerts.append(luv)
+            else: isFaceSel = False
+        
+        if isFaceSel:            
+            if len(f.verts) is not 4:
+                nonQuadFaces.append(f)
+                edgeVerts.extend(facesEdgeVerts)
+            else: 
+                selFaces.append(f)
                 
-                x = round(luv.uv.x, precision)
-                y = round(luv.uv.y, precision)
+                for l in f.loops:
+                    luv = l[uv_layer]
+                    x = round(luv.uv.x, precision)
+                    y = round(luv.uv.y, precision)
+                    vertsDict[(x, y)].append(luv)
+        
+        else: edgeVerts.extend(facesEdgeVerts)
          
-                vertsDict[(x, y)].append(luv)
-            
-            selFaces.append(f)
-            continue
-            
-        #adding all verts of edge faces (non selected faces)
-        if isFaceContainSelV:
-            for l in f.loops:
-                luv = l[uv_layer]
-                if luv.select:
-                    edgeVerts.append(luv)
-    
-    [filteredVerts.append(v) for v in selVerts if CountQuasiEqualVerts(v, filteredVerts) is 0]
+    for ev in edgeVerts:
+        if ev not in filteredVerts:
+            filteredVerts.append(ev)
 
-    return selVerts, edgeVerts, filteredVerts, selFaces, nonQuadFaces, vertsDict, isTargetSel
+    return edgeVerts, filteredVerts, selFaces, nonQuadFaces, vertsDict
 
 #modified ideasman42's uvcalc_follow_active.py
 def FollowActiveUV(operator, me, f_act, faces, EXTEND_MODE = 'LENGTH_AVERAGE'):
     bm = bmesh.from_edit_mesh(me)
     uv_act = bm.loops.layers.uv.active
-
-    faces = []
-    for f in bm.faces:
-        isFaceSel = True
-        isFaceContainSelV = False
-        for l in f.loops:
-            luv = l[uv_act]
-            if luv.select is False:
-                isFaceSel = False
-            else:
-                isFaceContainSelV = True
     
-        if isFaceSel is True:
-            faces.append(f)
-            
     # our own local walker
     def walk_face_init(faces, f_act):
         # first tag all faces True (so we dont uvmap them)
@@ -397,9 +379,6 @@ def FollowActiveUV(operator, me, f_act, faces, EXTEND_MODE = 'LENGTH_AVERAGE'):
         edge_lengths = [None] * len(bm.edges)   #NoneType times the length of edges list
         
         for f in faces:
-            if len(f.verts) is not 4: 
-                operator.report({'ERROR'}, "non-quad face detected")
-                return
             # we know its a quad
             l_quad = f.loops[:] 
             l_pair_a = (l_quad[0], l_quad[2])
@@ -687,13 +666,6 @@ def RotateSelected(angle, pivot = None):
     bpy.context.area.type = last_area
     
     return
-
-def CountQuasiEqualVerts(v, list):
-    i=0
-    for e in list:
-        if AreVertsQuasiEqual(v,e):
-            i += 1
-    return i
 
 def AreVertsQuasiEqual(v1, v2, allowedError = 0.0009):
     if abs(v1.uv.x -v2.uv.x) < allowedError and abs(v1.uv.y -v2.uv.y) < allowedError:
