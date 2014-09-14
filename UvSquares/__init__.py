@@ -206,6 +206,7 @@ def SnapCursorToClosestSelected(filteredVerts):
 
 def ListsOfVerts(uv_layer, bm):
     edgeVerts = []
+    allEdgeVerts = []
     filteredVerts = []
     selFaces = []
     nonQuadFaces = []
@@ -224,6 +225,7 @@ def ListsOfVerts(uv_layer, bm):
                 facesEdgeVerts.append(luv)
             else: isFaceSel = False
         
+        allEdgeVerts.extend(facesEdgeVerts)
         if isFaceSel:            
             if len(f.verts) is not 4:
                 nonQuadFaces.append(f)
@@ -238,7 +240,10 @@ def ListsOfVerts(uv_layer, bm):
                     vertsDict[(x, y)].append(luv)
         
         else: edgeVerts.extend(facesEdgeVerts)
-         
+    
+    if len(edgeVerts) is 0: 
+        edgeVerts.extend(allEdgeVerts)
+        
     for ev in edgeVerts:
         if ev not in filteredVerts:
             filteredVerts.append(ev)
@@ -986,5 +991,6 @@ if __name__ == "__main__":
 
 
  
+
 
 
