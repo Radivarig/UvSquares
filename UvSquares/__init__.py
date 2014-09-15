@@ -17,7 +17,7 @@ bl_info = {
     "name": "UV Squares",
     "description": "UV Editor tool for reshaping selection to grid.",
     "author": "Reslav Hollos",
-    "version": (1, 3, 993),
+    "version": (1, 4, 0),
     "blender": (2, 71, 0),
     "category": "Mesh",
     #"location": "UV Image Editor > UVs > UVs to grid of squares",
@@ -787,14 +787,13 @@ class UvSquares(bpy.types.Operator):
     """Reshapes UV faces to a grid of equivalent squares"""
     bl_idname = "uv.uv_squares"
     bl_label = "UVs to grid of squares"
-
+    bl_options = {'REGISTER', 'UNDO'}
     @classmethod
     def poll(cls, context):
         return (context.mode == 'EDIT_MESH')
 
     def execute(self, context):
         main(context, self, True)
-        bpy.ops.ed.undo_push()
         return {'FINISHED'}
 
 class UvSquaresByShape(bpy.types.Operator):
@@ -900,14 +899,7 @@ class UvSquaresPanel(bpy.types.Panel):
       
         split = layout.split()
         col = split.column(align=True)
-        row = col.row(align=True)
-        
-        '''row.operator(SymUvGridByShape.bl_idname, text="Shape")
-        row.operator(SymUvSquares.bl_idname, text="Square")
-    
-        row.label(text="anti", icon = "RECOVER_LAST")
-        row.label(text="-cw")'''
-        
+        row = col.row(align=True)    
       
         row = layout.row()
     
@@ -922,7 +914,6 @@ class UvSquaresPanel(bpy.types.Panel):
         row = layout.row()
         row.label(text="V - Join (Stitch), I -Toggle Islands")
     
-
 def register():
     bpy.utils.register_class(UvSquaresPanel)
     bpy.utils.register_class(UvSquares)
@@ -944,10 +935,6 @@ def register():
     km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
     kmi = km.keymap_items.new(UvSquaresByShape.bl_idname, 'E', 'PRESS', alt=True)
     addon_keymaps.append((km, kmi))
-    
-    '''km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
-    kmi = km.keymap_items.new(SymUvGridByShape.bl_idname, 'E', 'PRESS', alt=True, shift=True)
-    addon_keymaps.append((km, kmi))'''
     
     km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
     kmi = km.keymap_items.new(RipFaces.bl_idname, 'V', 'PRESS', alt=True)
@@ -991,6 +978,7 @@ if __name__ == "__main__":
 
 
  
+
 
 
 
