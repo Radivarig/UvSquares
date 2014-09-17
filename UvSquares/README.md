@@ -15,7 +15,7 @@ Features
 
 Shortcuts
 --
-* **[**grid**]/[**aligning**]** is **alt + [E]** 
+* [**grid**]/[**aligning**] is **alt + [E]** 
 * Rip faces is **alt + [V]**
 * Join vertices is **shift + alt + [V]**
 
@@ -31,8 +31,8 @@ Notes
     
 **Reshaping to grid**
 * Works on any UV selection shape of quad faces
-* You can specify active quad, otherwise it gets selected automatically 
-* 2d cursor is snapped to closest corner and is determining the direction for calculating the length of start and end of grid as well as **length** of one unit for square grid.
+* You can specify active quad by making it the last selected face, if not one face will automatically be taken as reference quad 
+* 2d cursor is snapped to closest corner and is determining the direction for calculating the length of start and end of grid as well as **length** of one unit for square grid
 
 **Rip faces**
 * Rip/separate any selected faces
