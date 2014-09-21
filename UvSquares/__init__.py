@@ -17,7 +17,7 @@ bl_info = {
     "name": "UV Squares",
     "description": "UV Editor tool for reshaping selection to grid.",
     "author": "Reslav Hollos",
-    "version": (1, 4, 1),
+    "version": (1, 4, 2),
     "blender": (2, 71, 0),
     "category": "Mesh",
     #"location": "UV Image Editor > UVs > UVs to grid of squares",
@@ -252,11 +252,13 @@ def ListsOfVerts(uv_layer, bm):
     if len(edgeVerts) is 0:
         noEdge = True
         edgeVerts.extend(allEdgeVerts)
+    
+    if len(selFaces) is 0:
+        for ev in edgeVerts:
+            if ev not in filteredVerts:
+                filteredVerts.append(ev)
+    else: filteredVerts = edgeVerts
         
-    for ev in edgeVerts:
-        if ev not in filteredVerts:
-            filteredVerts.append(ev)
-
     return edgeVerts, filteredVerts, selFaces, nonQuadFaces, vertsDict, noEdge
 
 #modified ideasman42's uvcalc_follow_active.py
