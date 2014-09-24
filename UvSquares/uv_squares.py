@@ -17,7 +17,7 @@ bl_info = {
     "name": "UV Squares",
     "description": "UV Editor tool for reshaping selection to grid.",
     "author": "Reslav Hollos",
-    "version": (1, 4, 2),
+    "version": (1, 4, 21),
     "blender": (2, 71, 0),
     "category": "Mesh",
     #"location": "UV Image Editor > UVs > UVs to grid of squares",
@@ -53,8 +53,8 @@ def main(context, operator, square = False, snapToClosest = False):
     #    operator.report({'ERROR'}, "selected more than " +str(allowedFaces) +" allowed faces.")
     #   return 
 
-    edgeVerts, filteredVerts, selFaces, nonQuadFaces, vertsDict, noEdge = ListsOfVerts(uv_layer, bm)
-       
+    edgeVerts, filteredVerts, selFaces, nonQuadFaces, vertsDict, noEdge = ListsOfVerts(uv_layer, bm)   
+    
     if len(filteredVerts) is 0: return 
     if len(filteredVerts) is 1: 
         SnapCursorToClosestSelected(filteredVerts)
@@ -255,11 +255,17 @@ def ListsOfVerts(uv_layer, bm):
     
     if len(selFaces) is 0:
         for ev in edgeVerts:
-            if ev not in filteredVerts:
+            if ListQuasiContainsVect(filteredVerts, ev) is False:
                 filteredVerts.append(ev)
     else: filteredVerts = edgeVerts
         
     return edgeVerts, filteredVerts, selFaces, nonQuadFaces, vertsDict, noEdge
+
+def ListQuasiContainsVect(list, vect):
+    for v in list:
+        if AreVertsQuasiEqual(v, vect):
+            return True
+    return False
 
 #modified ideasman42's uvcalc_follow_active.py
 def FollowActiveUV(operator, me, f_act, faces, EXTEND_MODE = 'LENGTH_AVERAGE'):
@@ -449,7 +455,7 @@ def SymmetrySelected(axis, pivot = "MEDIAN"):
 def AreVectsLinedOnAxis(verts):
     areLinedX = True
     areLinedY = True
-    allowedError = 0.0001
+    allowedError = 0.0009
     valX = verts[0].uv.x
     valY = verts[0].uv.y
     for v in verts:
@@ -467,7 +473,7 @@ def MakeEqualDistanceBetweenVertsInLine(filteredVerts, vertsDict, startv = None)
     last = verts[len(verts)-1].uv
     
     horizontal = True
-    if ((last.x - first.x) >0.0001):
+    if ((last.x - first.x) >0.0009):
         slope = (last.y - first.y)/(last.x - first.x)
         if (slope > 1) or (slope <-1):
             horizontal = False 
@@ -549,7 +555,7 @@ def ScaleTo0OnAxisAndCursor(filteredVerts, vertsDict, startv = None, horizontal 
     
     if horizontal is None:
         horizontal = True
-        if ((last.uv.x - first.uv.x) >0.0001):
+        if ((last.uv.x - first.uv.x) >0.0009):
             slope = (last.uv.y - first.uv.y)/(last.uv.x - first.uv.x)
             if (slope > 1) or (slope <-1):
                 horizontal = False 
@@ -989,6 +995,7 @@ if __name__ == "__main__":
 
 
  
+
 
 
 
