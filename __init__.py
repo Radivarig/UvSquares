@@ -40,13 +40,28 @@ def register():
     bpy.utils.register_class(JoinFaces)
     bpy.utils.register_class(SnapToAxis)
     bpy.utils.register_class(SnapToAxisWithEqual)
-	
+
     #menu
     bpy.types.IMAGE_MT_uvs.append(menu_func_uv_squares)
     bpy.types.IMAGE_MT_uvs.append(menu_func_uv_squares_by_shape)
     bpy.types.IMAGE_MT_uvs.append(menu_func_face_rip)
     bpy.types.IMAGE_MT_uvs.append(menu_func_face_join)
-    
+
+    #handle the keymap
+    wm = bpy.context.window_manager
+
+    km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
+    kmi = km.keymap_items.new(UvSquaresByShape.bl_idname, 'E', 'PRESS', alt=True)
+    addon_keymaps.append((km, kmi))
+
+    km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
+    kmi = km.keymap_items.new(RipFaces.bl_idname, 'V', 'PRESS', alt=True)
+    addon_keymaps.append((km, kmi))
+
+    km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
+    kmi = km.keymap_items.new(JoinFaces.bl_idname, 'V', 'PRESS', alt=True, shift=True)
+    addon_keymaps.append((km, kmi))
+
 
 def unregister():
     bpy.utils.unregister_class(UvSquaresPanel)
@@ -56,8 +71,14 @@ def unregister():
     bpy.utils.unregister_class(JoinFaces)
     bpy.utils.unregister_class(SnapToAxis)
     bpy.utils.unregister_class(SnapToAxisWithEqual)
-    
+
     bpy.types.IMAGE_MT_uvs.remove(menu_func_uv_squares)
     bpy.types.IMAGE_MT_uvs.remove(menu_func_uv_squares_by_shape)
     bpy.types.IMAGE_MT_uvs.remove(menu_func_face_rip)
     bpy.types.IMAGE_MT_uvs.remove(menu_func_face_join)
+
+    # handle the keymap
+    for km, kmi in addon_keymaps:
+        km.keymap_items.remove(kmi)
+    # clear the list
+    addon_keymaps.clear()
