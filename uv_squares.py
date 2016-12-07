@@ -953,18 +953,18 @@ def register():
 
     #handle the keymap
     wm = bpy.context.window_manager
-    
-    km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
-    kmi = km.keymap_items.new(UvSquaresByShape.bl_idname, 'E', 'PRESS', alt=True)
-    addon_keymaps.append((km, kmi))
-    
-    km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
-    kmi = km.keymap_items.new(RipFaces.bl_idname, 'V', 'PRESS', alt=True)
-    addon_keymaps.append((km, kmi))
-    
-    km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
-    kmi = km.keymap_items.new(JoinFaces.bl_idname, 'V', 'PRESS', alt=True, shift=True)
-    addon_keymaps.append((km, kmi))
+    if wm.keyconfigs.addon is not None: # Allow keyconfigs.addon to be None (for headless command line calls)
+        km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
+        kmi = km.keymap_items.new(UvSquaresByShape.bl_idname, 'E', 'PRESS', alt=True)
+        addon_keymaps.append((km, kmi))
+        
+        km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
+        kmi = km.keymap_items.new(RipFaces.bl_idname, 'V', 'PRESS', alt=True)
+        addon_keymaps.append((km, kmi))
+        
+        km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
+        kmi = km.keymap_items.new(JoinFaces.bl_idname, 'V', 'PRESS', alt=True, shift=True)
+        addon_keymaps.append((km, kmi))
     
     
 
