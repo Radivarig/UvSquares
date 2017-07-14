@@ -14,10 +14,13 @@
 #    along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
+if "bpy" in locals():
+    import importlib
+    importlib.reload(uv_squares)
+else:
+    from . import uv_squares
+
 import bpy
-
-from .uv_squares import *
-
 
 bl_info = {
     "name": "UV Squares",
@@ -31,54 +34,55 @@ bl_info = {
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/Scripts/UV/Uv_Squares"
     }
 
+import traceback
+
+addon_keymaps = []
+
+def menu_func_uv_squares(self, context): self.layout.operator(uv_squares.UvSquares.bl_idname)
+def menu_func_uv_squares_by_shape(self, context): self.layout.operator(uv_squares.UvSquaresByShape.bl_idname)
+def menu_func_face_rip(self, context): self.layout.operator(uv_squares.RipFaces.bl_idname)
+def menu_func_face_join(self, context): self.layout.operator(uv_squares.JoinFaces.bl_idname)
 
 def register():
-    bpy.utils.register_class(UvSquaresPanel)
-    bpy.utils.register_class(UvSquares)
-    bpy.utils.register_class(UvSquaresByShape)
-    bpy.utils.register_class(RipFaces)
-    bpy.utils.register_class(JoinFaces)
-    bpy.utils.register_class(SnapToAxis)
-    bpy.utils.register_class(SnapToAxisWithEqual)
+    try:
+        bpy.utils.register_module(__name__)
 
-    #menu
-    bpy.types.IMAGE_MT_uvs.append(menu_func_uv_squares)
-    bpy.types.IMAGE_MT_uvs.append(menu_func_uv_squares_by_shape)
-    bpy.types.IMAGE_MT_uvs.append(menu_func_face_rip)
-    bpy.types.IMAGE_MT_uvs.append(menu_func_face_join)
+        #menu
+        bpy.types.IMAGE_MT_uvs.append(menu_func_uv_squares)
+        bpy.types.IMAGE_MT_uvs.append(menu_func_uv_squares_by_shape)
+        bpy.types.IMAGE_MT_uvs.append(menu_func_face_rip)
+        bpy.types.IMAGE_MT_uvs.append(menu_func_face_join)
 
-    #handle the keymap
-    wm = bpy.context.window_manager
+        #handle the keymap
+        wm = bpy.context.window_manager
 
-    km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
-    kmi = km.keymap_items.new(UvSquaresByShape.bl_idname, 'E', 'PRESS', alt=True)
-    addon_keymaps.append((km, kmi))
+        km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
+        kmi = km.keymap_items.new(uv_squares.UvSquaresByShape.bl_idname, 'E', 'PRESS', alt=True)
+        addon_keymaps.append((km, kmi))
 
-    km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
-    kmi = km.keymap_items.new(RipFaces.bl_idname, 'V', 'PRESS', alt=True)
-    addon_keymaps.append((km, kmi))
+        km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
+        kmi = km.keymap_items.new(uv_squares.RipFaces.bl_idname, 'V', 'PRESS', alt=True)
+        addon_keymaps.append((km, kmi))
 
-    km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
-    kmi = km.keymap_items.new(JoinFaces.bl_idname, 'V', 'PRESS', alt=True, shift=True)
-    addon_keymaps.append((km, kmi))
-
+        km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
+        kmi = km.keymap_items.new(uv_squares.JoinFaces.bl_idname, 'V', 'PRESS', alt=True, shift=True)
+        addon_keymaps.append((km, kmi))
+    except:
+        traceback.print_exc()
 
 def unregister():
-    bpy.utils.unregister_class(UvSquaresPanel)
-    bpy.utils.unregister_class(UvSquares)
-    bpy.utils.unregister_class(UvSquaresByShape)
-    bpy.utils.unregister_class(RipFaces)
-    bpy.utils.unregister_class(JoinFaces)
-    bpy.utils.unregister_class(SnapToAxis)
-    bpy.utils.unregister_class(SnapToAxisWithEqual)
+    try:
+        bpy.utils.register_module(__name__)
 
-    bpy.types.IMAGE_MT_uvs.remove(menu_func_uv_squares)
-    bpy.types.IMAGE_MT_uvs.remove(menu_func_uv_squares_by_shape)
-    bpy.types.IMAGE_MT_uvs.remove(menu_func_face_rip)
-    bpy.types.IMAGE_MT_uvs.remove(menu_func_face_join)
+        bpy.types.IMAGE_MT_uvs.remove(menu_func_uv_squares)
+        bpy.types.IMAGE_MT_uvs.remove(menu_func_uv_squares_by_shape)
+        bpy.types.IMAGE_MT_uvs.remove(menu_func_face_rip)
+        bpy.types.IMAGE_MT_uvs.remove(menu_func_face_join)
 
-    # handle the keymap
-    for km, kmi in addon_keymaps:
-        km.keymap_items.remove(kmi)
-    # clear the list
-    addon_keymaps.clear()
+        # handle the keymap
+        for km, kmi in addon_keymaps:
+            km.keymap_items.remove(kmi)
+        # clear the list
+        addon_keymaps.clear()
+    except:
+        traceback.print_exc()
