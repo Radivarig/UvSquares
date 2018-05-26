@@ -51,14 +51,7 @@ def main(context, operator, square = False, snapToClosest = False):
     uv_layer = bm.loops.layers.uv.verify()
     bm.faces.layers.tex.verify()  # currently blender needs both layers.
 
-    face_act = bm.faces.active    
-    targetFace = face_act
-        
-    #if len(bm.faces) > allowedFaces:
-    #    operator.report({'ERROR'}, "selected more than " +str(allowedFaces) +" allowed faces.")
-    #   return 
-
-    edgeVerts, filteredVerts, selFaces, nonQuadFaces, vertsDict, noEdge = ListsOfVerts(uv_layer, bm)   
+    edgeVerts, filteredVerts, selFaces, nonQuadFaces, vertsDict, noEdge = ListsOfVerts(uv_layer, bm)
     
     if len(filteredVerts) is 0: return 
     if len(filteredVerts) is 1: 
@@ -81,28 +74,62 @@ def main(context, operator, square = False, snapToClosest = False):
                 
         MakeEqualDistanceBetweenVertsInLine(filteredVerts, vertsDict, cursorClosestTo)
         return SuccessFinished(me, startTime)
-        
-   
-    #else:
-    
-    #active face checks
-    if targetFace is None or targetFace.select is False or len(targetFace.verts) is not 4:
-        targetFace = selFaces[0]
-    else:
-        for l in targetFace.loops:
-            if l[uv_layer].select is False: 
-                targetFace = selFaces[0]
-                break 
-            
-    ShapeFace(uv_layer, operator, targetFace, vertsDict, square)
-    
+
+    # deselect non quads
     for nf in nonQuadFaces:
         for l in nf.loops:
             luv = l[uv_layer]
             luv.select = False
+
+    def main2 (targetFace, faces):
+        ShapeFace(uv_layer, operator, targetFace, vertsDict, square)
+        
+        if square: FollowActiveUV(operator, me, targetFace, faces, 'EVEN')
+        else: FollowActiveUV(operator, me, targetFace, faces)
+
+    # multi island
+    __face_to_verts = defaultdict(set)
+    __vert_to_faces = defaultdict(set)
+
+    def __parse_island(face_idx, faces_left, island):
+        if face_idx in faces_left:
+            faces_left.remove(face_idx)
+            island.append(bm.faces[face_idx])
+            for v in __face_to_verts[face_idx]:
+                connected_faces = __vert_to_faces[v]
+                if connected_faces:
+                    for cf in connected_faces:
+                        __parse_island(cf, faces_left, island)
+
+    def __get_islands():
+        islands = []
+        faces_left = set(__face_to_verts.keys())
+        while len(faces_left) > 0:
+            current_island = []
+            face_idx = list(faces_left)[0]
+            __parse_island(face_idx, faces_left, current_island)
+            islands.append(current_island)
+        return islands
     
-    if square: FollowActiveUV(operator, me, targetFace, selFaces, 'EVEN')
-    else: FollowActiveUV(operator, me, targetFace, selFaces)
+    for f in selFaces:
+        for l in f.loops:
+            id = l[uv_layer].uv.to_tuple(5), l.vert.index
+            __face_to_verts[f.index].add(id)
+            __vert_to_faces[id].add(f.index)
+
+    islands = __get_islands()
+    for island_faces in islands:
+        for face in island_faces:
+            targetFace = bm.faces.active if len(islands) is 1 else island_faces[0]
+#            if targetFace is None or targetFace.select is False or len(targetFace.verts) is not 4:
+#                targetFace = island_faces[0]
+#            else:
+#                for l in targetFace.loops:
+#                    if l[uv_layer].select is False: 
+#                        targetFace = island_faces[0]
+#                        break 
+
+        main2 (targetFace, island_faces)
     
     if noEdge is False:
         #edge has ripped so we connect it back 
@@ -805,6 +832,7 @@ def DeselectAll():
     bpy.ops.uv.select_all(action='DESELECT')
     return
 
+
 class UvSquares(bpy.types.Operator):
     """Reshapes UV faces to a grid of equivalent squares"""
     bl_idname = "uv.uv_squares"
@@ -944,7 +972,7 @@ def register():
     bpy.utils.register_class(JoinFaces)
     bpy.utils.register_class(SnapToAxis)
     bpy.utils.register_class(SnapToAxisWithEqual)
-	
+    
     #menu
     bpy.types.IMAGE_MT_uvs.append(menu_func_uv_squares)
     bpy.types.IMAGE_MT_uvs.append(menu_func_uv_squares_by_shape)
