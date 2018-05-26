@@ -814,9 +814,8 @@ class UvSquares(bpy.types.Operator):
     def poll(cls, context):
         return (context.mode == 'EDIT_MESH')
 
-    def __init__(self):
-        self.__face_to_verts = defaultdict(set)
-        self.__vert_to_faces = defaultdict(set)
+    __face_to_verts = defaultdict(set)
+    __vert_to_faces = defaultdict(set)
 
     def __parse_island(self, bm, face_idx, faces_left, island):
         if face_idx in faces_left:
@@ -842,8 +841,6 @@ class UvSquares(bpy.types.Operator):
         obj = bpy.context.active_object
         bm = bmesh.from_edit_mesh(obj.data)
         uv_layer = bm.loops.layers.uv.verify()
-        bm.faces.ensure_lookup_table()
-        bm.faces.index_update()
 
         selected_faces = [f for f in bm.faces if f.select]
         for f in selected_faces:
@@ -878,9 +875,8 @@ class UvSquaresByShape(bpy.types.Operator):
     def poll(cls, context):
         return (context.mode == 'EDIT_MESH')
 
-    def __init__(self):
-        self.__face_to_verts = defaultdict(set)
-        self.__vert_to_faces = defaultdict(set)
+    __face_to_verts = defaultdict(set)
+    __vert_to_faces = defaultdict(set)
 
     def __parse_island(self, bm, face_idx, faces_left, island):
         if face_idx in faces_left:
@@ -987,7 +983,12 @@ class SnapToAxisWithEqual(bpy.types.Operator):
         main(context, self)
         return {'FINISHED'}
 
+addon_keymaps = []
 
+def menu_func_uv_squares(self, context): self.layout.operator(UvSquares.bl_idname)
+def menu_func_uv_squares_by_shape(self, context): self.layout.operator(UvSquaresByShape.bl_idname)
+def menu_func_face_rip(self, context): self.layout.operator(RipFaces.bl_idname)
+def menu_func_face_join(self, context): self.layout.operator(JoinFaces.bl_idname)
     
 class UvSquaresPanel(bpy.types.Panel):
     """UvSquares Panel"""
