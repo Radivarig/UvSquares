@@ -814,55 +814,8 @@ class UvSquares(bpy.types.Operator):
     def poll(cls, context):
         return (context.mode == 'EDIT_MESH')
 
-    __face_to_verts = defaultdict(set)
-    __vert_to_faces = defaultdict(set)
-
-    def __parse_island(self, bm, face_idx, faces_left, island):
-        if face_idx in faces_left:
-            faces_left.remove(face_idx)
-            island.append({'face': bm.faces[face_idx]})
-            for v in self.__face_to_verts[face_idx]:
-                connected_faces = self.__vert_to_faces[v]
-                if connected_faces:
-                    for cf in connected_faces:
-                        self.__parse_island(bm, cf, faces_left, island)
-
-    def __get_island(self, bm):
-        uv_island_lists = []
-        faces_left = set(self.__face_to_verts.keys())
-        while len(faces_left) > 0:
-            current_island = []
-            face_idx = list(faces_left)[0]
-            self.__parse_island(bm, face_idx, faces_left, current_island)
-            uv_island_lists.append(current_island)
-        return uv_island_lists
-
     def execute(self, context):
-        obj = bpy.context.active_object
-        bm = bmesh.from_edit_mesh(obj.data)
-        uv_layer = bm.loops.layers.uv.verify()
-
-        selected_faces = [f for f in bm.faces if f.select]
-        for f in selected_faces:
-            for l in f.loops:
-                id = l[uv_layer].uv.to_tuple(5), l.vert.index
-                self.__face_to_verts[f.index].add(id)
-                self.__vert_to_faces[id].add(f.index)
-
-        uv_island_lists = self.__get_island(bm)
-
-        for island in uv_island_lists:
-            for f in bm.faces:  # deselect faces
-                if f.select:
-                    f.select = False
-            for faces in island:
-                faces['face'].select = True
-            main(context, self,True)
-        for f in bm.faces:  # deselect faces
-            if f in selected_faces:
-                f.select = True
-            else:
-                f.select = False
+        main(context, self, True)
         return {'FINISHED'}
 
 class UvSquaresByShape(bpy.types.Operator):
@@ -875,56 +828,9 @@ class UvSquaresByShape(bpy.types.Operator):
     def poll(cls, context):
         return (context.mode == 'EDIT_MESH')
 
-    __face_to_verts = defaultdict(set)
-    __vert_to_faces = defaultdict(set)
-
-    def __parse_island(self, bm, face_idx, faces_left, island):
-        if face_idx in faces_left:
-            faces_left.remove(face_idx)
-            island.append({'face': bm.faces[face_idx]})
-            for v in self.__face_to_verts[face_idx]:
-                connected_faces = self.__vert_to_faces[v]
-                if connected_faces:
-                    for cf in connected_faces:
-                        self.__parse_island(bm, cf, faces_left, island)
-
-    def __get_island(self, bm):
-        uv_island_lists = []
-        faces_left = set(self.__face_to_verts.keys())
-        while len(faces_left) > 0:
-            current_island = []
-            face_idx = list(faces_left)[0]
-            self.__parse_island(bm, face_idx, faces_left, current_island)
-            uv_island_lists.append(current_island)
-        return uv_island_lists
-
     def execute(self, context):
-        obj = bpy.context.active_object
-        bm = bmesh.from_edit_mesh(obj.data)
-        uv_layer = bm.loops.layers.uv.verify()
-
-        selected_faces = [f for f in bm.faces if f.select]
-        for f in selected_faces:
-            for l in f.loops:
-                id = l[uv_layer].uv.to_tuple(5), l.vert.index
-                self.__face_to_verts[f.index].add(id)
-                self.__vert_to_faces[id].add(f.index)
-
-        uv_island_lists = self.__get_island(bm)
-
-        for island in uv_island_lists:
-            for f in bm.faces:  # deselect faces
-                if f.select:
-                    f.select = False
-            for faces in island:
-                faces['face'].select = True
-            main(context, self)
-        for f in bm.faces:  # deselect faces
-            if f in selected_faces:
-                f.select = True
-            else:
-                f.select = False
-        return {'FINISHED'}
+        main(context, self)
+        return {'FINISHED'}    
 
 class RipFaces(bpy.types.Operator):
     """Rip UV faces apart"""
