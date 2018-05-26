@@ -120,8 +120,14 @@ def main(context, operator, square = False, snapToClosest = False):
     islands = __get_islands()
     for island_faces in islands:
         for face in island_faces:
-            targetFace = bm.faces.active if len(islands) is 1 else island_faces[0]
-#            if targetFace is None or targetFace.select is False or len(targetFace.verts) is not 4:
+            targetFace = bm.faces.active
+            if (targetFace is None or
+               len(islands) > 1 or
+               targetFace.select is False or
+               len(targetFace.verts) is not 4):
+                   targetFace = island_faces[0]
+
+             #if targetFace is None or targetFace.select is False or :
 #                targetFace = island_faces[0]
 #            else:
 #                for l in targetFace.loops:
