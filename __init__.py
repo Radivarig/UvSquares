@@ -33,13 +33,13 @@ bl_info = {
 
 
 def register():
-    bpy.utils.register_class(UvSquaresPanel)
-    bpy.utils.register_class(UvSquares)
-    bpy.utils.register_class(UvSquaresByShape)
-    bpy.utils.register_class(RipFaces)
-    bpy.utils.register_class(JoinFaces)
-    bpy.utils.register_class(SnapToAxis)
-    bpy.utils.register_class(SnapToAxisWithEqual)
+    bpy.utils.register_class(UV_OT_UvSquaresPanel)
+    bpy.utils.register_class(UV_OT_UvSquares)
+    bpy.utils.register_class(UV_OT_UvSquaresByShape)
+    bpy.utils.register_class(UV_OT_RipFaces)
+    bpy.utils.register_class(UV_OT_JoinFaces)
+    bpy.utils.register_class(UV_OT_SnapToAxis)
+    bpy.utils.register_class(UV_OT_SnapToAxisWithEqual)
 
     #menu
     bpy.types.IMAGE_MT_uvs.append(menu_func_uv_squares)
@@ -51,26 +51,26 @@ def register():
     wm = bpy.context.window_manager
 
     km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
-    kmi = km.keymap_items.new(UvSquaresByShape.bl_idname, 'E', 'PRESS', alt=True)
+    kmi = km.keymap_items.new(UV_OT_UvSquaresByShape.bl_idname, 'E', 'PRESS', alt=True)
     addon_keymaps.append((km, kmi))
 
     km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
-    kmi = km.keymap_items.new(RipFaces.bl_idname, 'V', 'PRESS', alt=True)
+    kmi = km.keymap_items.new(UV_OT_RipFaces.bl_idname, 'V', 'PRESS', alt=True)
     addon_keymaps.append((km, kmi))
 
     km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
-    kmi = km.keymap_items.new(JoinFaces.bl_idname, 'V', 'PRESS', alt=True, shift=True)
+    kmi = km.keymap_items.new(UV_OT_JoinFaces.bl_idname, 'V', 'PRESS', alt=True, shift=True)
     addon_keymaps.append((km, kmi))
 
 
 def unregister():
-    bpy.utils.unregister_class(UvSquaresPanel)
-    bpy.utils.unregister_class(UvSquares)
-    bpy.utils.unregister_class(UvSquaresByShape)
-    bpy.utils.unregister_class(RipFaces)
-    bpy.utils.unregister_class(JoinFaces)
-    bpy.utils.unregister_class(SnapToAxis)
-    bpy.utils.unregister_class(SnapToAxisWithEqual)
+    bpy.utils.unregister_class(UV_OT_UvSquaresPanel)
+    bpy.utils.unregister_class(UV_OT_UvSquares)
+    bpy.utils.unregister_class(UV_OT_UvSquaresByShape)
+    bpy.utils.unregister_class(UV_OT_RipFaces)
+    bpy.utils.unregister_class(UV_OT_JoinFaces)
+    bpy.utils.unregister_class(UV_OT_SnapToAxis)
+    bpy.utils.unregister_class(UV_OT_SnapToAxisWithEqual)
 
     bpy.types.IMAGE_MT_uvs.remove(menu_func_uv_squares)
     bpy.types.IMAGE_MT_uvs.remove(menu_func_uv_squares_by_shape)
