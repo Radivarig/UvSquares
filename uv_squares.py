@@ -49,7 +49,7 @@ def main(context, operator, square = False, snapToClosest = False):
     me = obj.data
     bm = bmesh.from_edit_mesh(me)
     uv_layer = bm.loops.layers.uv.verify()
-    bm.faces.layers.tex.verify()  # currently blender needs both layers.
+    # bm.faces.layers.tex.verify()  # currently blender needs both layers.
 
     edgeVerts, filteredVerts, selFaces, nonQuadFaces, vertsDict, noEdge = ListsOfVerts(uv_layer, bm)
     
@@ -747,7 +747,7 @@ def RipUvFaces(context, operator):
     bm = bmesh.from_edit_mesh(me)
     
     uv_layer = bm.loops.layers.uv.verify()
-    bm.faces.layers.tex.verify()  # currently blender needs both layers.
+    # bm.faces.layers.tex.verify()  # currently blender needs both layers.
        
     selFaces = []
     
@@ -797,7 +797,7 @@ def JoinUvFaces(context, operator):
     bm = bmesh.from_edit_mesh(me)
     
     uv_layer = bm.loops.layers.uv.verify()
-    bm.faces.layers.tex.verify()  # currently blender needs both layers.
+    # bm.faces.layers.tex.verify()  # currently blender needs both layers.
     
     vertsDict = defaultdict(list)        #dict 
              
