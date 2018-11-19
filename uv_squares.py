@@ -944,7 +944,7 @@ class UV_OT_UvSquaresPanel(bpy.types.Panel):
         split = layout.split()
         col = split.column(align=True)
         col.operator(UV_OT_SnapToAxis.bl_idname, text="Snap to Axis (X or Y)", icon = "ARROW_LEFTRIGHT")
-        col.operator(UV_OT_SnapToAxisWithEqual.bl_idname, text="Snap with Equal Distance", icon = "")
+        col.operator(UV_OT_SnapToAxisWithEqual.bl_idname, text="Snap with Equal Distance", icon = "KEY_DEHLT")
         
         row = layout.row()
         row.label(text="Convert \"Rectangle\" (4 corners):")
