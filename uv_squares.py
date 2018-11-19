@@ -839,7 +839,7 @@ def DeselectAll():
     return
 
 
-class UvSquares(bpy.types.Operator):
+class UV_OT_UvSquares(bpy.types.Operator):
     """Reshapes UV faces to a grid of equivalent squares"""
     bl_idname = "uv.uv_squares"
     bl_label = "UVs to grid of squares"
@@ -852,7 +852,7 @@ class UvSquares(bpy.types.Operator):
         main(context, self, True)
         return {'FINISHED'}
 
-class UvSquaresByShape(bpy.types.Operator):
+class UV_OT_UvSquaresByShape(bpy.types.Operator):
     """Reshapes UV faces to a grid with respect to shape by length of edges around selected corner"""
     bl_idname = "uv.uv_squares_by_shape"
     bl_label = "UVs to grid with respect to shape"
@@ -866,7 +866,7 @@ class UvSquaresByShape(bpy.types.Operator):
         main(context, self)
         return {'FINISHED'}    
 
-class RipFaces(bpy.types.Operator):
+class UV_OT_RipFaces(bpy.types.Operator):
     """Rip UV faces apart"""
     bl_idname = "uv.uv_face_rip"
     bl_label = "UV face rip"
@@ -880,7 +880,7 @@ class RipFaces(bpy.types.Operator):
         RipUvFaces(context, self)
         return {'FINISHED'}
 
-class JoinFaces(bpy.types.Operator):
+class UV_OT_JoinFaces(bpy.types.Operator):
     """Join selected UV faces to closest nonselected vertices"""
     bl_idname = "uv.uv_face_join"
     bl_label = "UV face join"
@@ -894,7 +894,7 @@ class JoinFaces(bpy.types.Operator):
         JoinUvFaces(context, self)
         return {'FINISHED'}
     
-class SnapToAxis(bpy.types.Operator):
+class UV_OT_SnapToAxis(bpy.types.Operator):
     """Snap sequenced vertices to Axis"""
     bl_idname = "uv.uv_snap_to_axis"
     bl_label = "UV snap vertices to axis"
@@ -908,7 +908,7 @@ class SnapToAxis(bpy.types.Operator):
         main(context, self)
         return {'FINISHED'}
 
-class SnapToAxisWithEqual(bpy.types.Operator):
+class UV_OT_SnapToAxisWithEqual(bpy.types.Operator):
     """Snap sequenced vertices to Axis with Equal Distance between"""
     bl_idname = "uv.uv_snap_to_axis_and_equal"
     bl_label = "UV snap vertices to axis with equal distance between"
@@ -925,12 +925,12 @@ class SnapToAxisWithEqual(bpy.types.Operator):
 
 addon_keymaps = []
 
-def menu_func_uv_squares(self, context): self.layout.operator(UvSquares.bl_idname)
-def menu_func_uv_squares_by_shape(self, context): self.layout.operator(UvSquaresByShape.bl_idname)
-def menu_func_face_rip(self, context): self.layout.operator(RipFaces.bl_idname)
-def menu_func_face_join(self, context): self.layout.operator(JoinFaces.bl_idname)
+def menu_func_uv_squares(self, context): self.layout.operator(UV_OT_UvSquares.bl_idname)
+def menu_func_uv_squares_by_shape(self, context): self.layout.operator(UV_OT_UvSquaresByShape.bl_idname)
+def menu_func_face_rip(self, context): self.layout.operator(UV_OT_RipFaces.bl_idname)
+def menu_func_face_join(self, context): self.layout.operator(UV_OT_JoinFaces.bl_idname)
     
-class UvSquaresPanel(bpy.types.Panel):
+class UV_OT_UvSquaresPanel(bpy.types.Panel):
     """UvSquares Panel"""
     bl_label = "UV Squares"
     bl_space_type = 'IMAGE_EDITOR'
@@ -943,15 +943,15 @@ class UvSquaresPanel(bpy.types.Panel):
         row.label(text="Select Sequenced Vertices to:")
         split = layout.split()
         col = split.column(align=True)
-        col.operator(SnapToAxis.bl_idname, text="Snap to Axis (X or Y)", icon = "ARROW_LEFTRIGHT")
-        col.operator(SnapToAxisWithEqual.bl_idname, text="Snap with Equal Distance", icon = "ALIGN")
+        col.operator(UV_OT_SnapToAxis.bl_idname, text="Snap to Axis (X or Y)", icon = "TRIA_RIGHT")
+        col.operator(UV_OT_SnapToAxisWithEqual.bl_idname, text="Snap with Equal Distance", icon = "TRIA_RIGHT")
         
         row = layout.row()
         row.label(text="Convert \"Rectangle\" (4 corners):")
         split = layout.split()
         col = split.column(align=True)
-        col.operator(UvSquaresByShape.bl_idname, text="To Grid By Shape", icon = "GRID")
-        col.operator(UvSquares.bl_idname, text="To Square Grid", icon = "UV_FACESEL")
+        col.operator(UV_OT_UvSquaresByShape.bl_idname, text="To Grid By Shape", icon = "TRIA_RIGHT")
+        col.operator(UV_OT_UvSquares.bl_idname, text="To Square Grid", icon = "TRIA_RIGHT")
       
         split = layout.split()
         col = split.column(align=True)
@@ -964,20 +964,20 @@ class UvSquaresPanel(bpy.types.Panel):
         col = split.column(align=True)
         row = col.row(align=True)
         
-        row.operator(RipFaces.bl_idname, text="Rip Vertex", icon = "LAYER_ACTIVE")
-        row.operator(RipFaces.bl_idname, text="Rip Faces", icon = "UV_ISLANDSEL")
-        col.operator(JoinFaces.bl_idname, text="Snap to Closest Unselected", icon = "SNAP_INCREMENT")
+        row.operator(UV_OT_RipFaces.bl_idname, text="Rip Vertex", icon = "TRIA_RIGHT")
+        row.operator(UV_OT_RipFaces.bl_idname, text="Rip Faces", icon = "TRIA_RIGHT")
+        col.operator(UV_OT_JoinFaces.bl_idname, text="Snap to Closest Unselected", icon = "TRIA_RIGHT")
         row = layout.row()
         row.label(text="V - Join (Stitch), I -Toggle Islands")
     
 def register():
-    bpy.utils.register_class(UvSquaresPanel)
-    bpy.utils.register_class(UvSquares)
-    bpy.utils.register_class(UvSquaresByShape)
-    bpy.utils.register_class(RipFaces)
-    bpy.utils.register_class(JoinFaces)
-    bpy.utils.register_class(SnapToAxis)
-    bpy.utils.register_class(SnapToAxisWithEqual)
+    bpy.utils.register_class(UV_OT_UvSquaresPanel)
+    bpy.utils.register_class(UV_OT_UvSquares)
+    bpy.utils.register_class(UV_OT_UvSquaresByShape)
+    bpy.utils.register_class(UV_OT_RipFaces)
+    bpy.utils.register_class(UV_OT_JoinFaces)
+    bpy.utils.register_class(UV_OT_SnapToAxis)
+    bpy.utils.register_class(UV_OT_SnapToAxisWithEqual)
     
     #menu
     bpy.types.IMAGE_MT_uvs.append(menu_func_uv_squares)
@@ -1003,13 +1003,13 @@ def register():
     
 
 def unregister():
-    bpy.utils.unregister_class(UvSquaresPanel)
-    bpy.utils.unregister_class(UvSquares)
-    bpy.utils.unregister_class(UvSquaresByShape)
-    bpy.utils.unregister_class(RipFaces)
-    bpy.utils.unregister_class(JoinFaces)
-    bpy.utils.unregister_class(SnapToAxis)
-    bpy.utils.unregister_class(SnapToAxisWithEqual)
+    bpy.utils.unregister_class(UV_OT_UvSquaresPanel)
+    bpy.utils.unregister_class(UV_OT_UvSquares)
+    bpy.utils.unregister_class(UV_OT_UvSquaresByShape)
+    bpy.utils.unregister_class(UV_OT_RipFaces)
+    bpy.utils.unregister_class(UV_OT_JoinFaces)
+    bpy.utils.unregister_class(UV_OT_SnapToAxis)
+    bpy.utils.unregister_class(UV_OT_SnapToAxisWithEqual)
     
     bpy.types.IMAGE_MT_uvs.remove(menu_func_uv_squares)
     bpy.types.IMAGE_MT_uvs.remove(menu_func_uv_squares_by_shape)
