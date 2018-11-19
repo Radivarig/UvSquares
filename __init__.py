@@ -23,7 +23,7 @@ bl_info = {
     "name": "UV Squares",
     "description": "UV Editor tool for reshaping selection to grid.",
     "author": "Reslav Hollos",
-    "version": (1, 5, 0),
+    "version": (1, 7, 0),
     "blender": (2, 80, 0),
     "category": "Mesh",
     #"location": "UV Image Editor > UVs > UVs to grid of squares",
