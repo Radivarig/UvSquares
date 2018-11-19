@@ -943,15 +943,15 @@ class UV_OT_UvSquaresPanel(bpy.types.Panel):
         row.label(text="Select Sequenced Vertices to:")
         split = layout.split()
         col = split.column(align=True)
-        col.operator(UV_OT_SnapToAxis.bl_idname, text="Snap to Axis (X or Y)", icon = "TRIA_RIGHT")
-        col.operator(UV_OT_SnapToAxisWithEqual.bl_idname, text="Snap with Equal Distance", icon = "TRIA_RIGHT")
+        col.operator(UV_OT_SnapToAxis.bl_idname, text="Snap to Axis (X or Y)", icon = "ARROW_LEFTRIGHT")
+        col.operator(UV_OT_SnapToAxisWithEqual.bl_idname, text="Snap with Equal Distance", icon = "")
         
         row = layout.row()
         row.label(text="Convert \"Rectangle\" (4 corners):")
         split = layout.split()
         col = split.column(align=True)
-        col.operator(UV_OT_UvSquaresByShape.bl_idname, text="To Grid By Shape", icon = "TRIA_RIGHT")
-        col.operator(UV_OT_UvSquares.bl_idname, text="To Square Grid", icon = "TRIA_RIGHT")
+        col.operator(UV_OT_UvSquaresByShape.bl_idname, text="To Grid By Shape", icon = "GRID")
+        col.operator(UV_OT_UvSquares.bl_idname, text="To Square Grid", icon = "UV_FACESEL")
       
         split = layout.split()
         col = split.column(align=True)
@@ -964,9 +964,9 @@ class UV_OT_UvSquaresPanel(bpy.types.Panel):
         col = split.column(align=True)
         row = col.row(align=True)
         
-        row.operator(UV_OT_RipFaces.bl_idname, text="Rip Vertex", icon = "TRIA_RIGHT")
-        row.operator(UV_OT_RipFaces.bl_idname, text="Rip Faces", icon = "TRIA_RIGHT")
-        col.operator(UV_OT_JoinFaces.bl_idname, text="Snap to Closest Unselected", icon = "TRIA_RIGHT")
+        row.operator(UV_OT_RipFaces.bl_idname, text="Rip Vertex", icon = "LAYER_ACTIVE")
+        row.operator(UV_OT_RipFaces.bl_idname, text="Rip Faces", icon = "UV_ISLANDSEL")
+        col.operator(UV_OT_JoinFaces.bl_idname, text="Snap to Closest Unselected", icon = "SNAP_GRID")
         row = layout.row()
         row.label(text="V - Join (Stitch), I -Toggle Islands")
     
