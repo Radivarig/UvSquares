@@ -88,22 +88,28 @@ def main(context, operator, square = False, snapToClosest = False):
         else: FollowActiveUV(operator, me, targetFace, faces)
 
     # multi island
-    __face_to_verts = defaultdict(set)
-    __vert_to_faces = defaultdict(set)
+    faceToVertsDict = defaultdict(set)
+    vertToFacesDict = defaultdict(set)
+
+    for f in selFaces:
+        for l in f.loops:
+            id = l[uv_layer].uv.to_tuple(5), l.vert.index
+            faceToVertsDict[f.index].add(id)
+            vertToFacesDict[id].add(f.index)
 
     def __parse_island(face_idx, faces_left, island):
         if face_idx in faces_left:
             faces_left.remove(face_idx)
             island.append(bm.faces[face_idx])
-            for v in __face_to_verts[face_idx]:
-                connected_faces = __vert_to_faces[v]
+            for v in faceToVertsDict[face_idx]:
+                connected_faces = vertToFacesDict[v]
                 if connected_faces:
                     for cf in connected_faces:
                         __parse_island(cf, faces_left, island)
 
     def __get_islands():
         islands = []
-        faces_left = set(__face_to_verts.keys())
+        faces_left = set(faceToVertsDict.keys())
         while len(faces_left) > 0:
             current_island = []
             face_idx = list(faces_left)[0]
@@ -111,11 +117,6 @@ def main(context, operator, square = False, snapToClosest = False):
             islands.append(current_island)
         return islands
     
-    for f in selFaces:
-        for l in f.loops:
-            id = l[uv_layer].uv.to_tuple(5), l.vert.index
-            __face_to_verts[f.index].add(id)
-            __vert_to_faces[id].add(f.index)
 
     islands = __get_islands()
     for island_faces in islands:
