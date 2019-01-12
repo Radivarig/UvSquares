@@ -97,28 +97,28 @@ def main(context, operator, square = False, snapToClosest = False):
             faceToVertsDict[f.index].add(id)
             vertToFacesDict[id].add(f.index)
 
-    def __parse_island(face_idx, faces_left, island):
-        if face_idx in faces_left:
-            faces_left.remove(face_idx)
-            island.append(bm.faces[face_idx])
-            for v in faceToVertsDict[face_idx]:
-                connected_faces = vertToFacesDict[v]
-                if connected_faces:
-                    for cf in connected_faces:
-                        __parse_island(cf, faces_left, island)
+    def isFaceSelected(f):
+        return f.select and all(l[uv_layer].select for l in f.loops)
 
-    def __get_islands():
+    def getIslands():
         islands = []
-        faces_left = set(faceToVertsDict.keys())
+        faces_left = set(selFaces)
         while len(faces_left) > 0:
-            current_island = []
-            face_idx = list(faces_left)[0]
-            __parse_island(face_idx, faces_left, current_island)
+            DeselectAll()
+            f = faces_left.pop()
+            for l in f.loops: l[uv_layer].select = True
+            bpy.ops.uv.select_linked(extend=True)
+            linked = [f for f in bm.faces if isFaceSelected(f)]
+            current_island = list(set(selFaces) & set(linked))
             islands.append(current_island)
-        return islands
-    
+            faces_left = [f for f in faces_left if f not in current_island]
 
-    islands = __get_islands()
+        DeselectAll()
+        for vertsKey in vertsDict.keys():
+            for v in vertsDict[vertsKey]: v.select = True
+        return islands
+
+    islands = getIslands()
     for island_faces in islands:
         for face in island_faces:
             targetFace = bm.faces.active
