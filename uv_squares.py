@@ -100,6 +100,11 @@ def main(context, operator, square = False, snapToClosest = False):
     def isFaceSelected(f):
         return f.select and all(l[uv_layer].select for l in f.loops)
 
+    def selectLinked():
+        if bpy.app.version < (2, 80, 0):
+            bpy.ops.uv.select_linked()
+        else: bpy.ops.uv.select_linked(extend=True)
+
     def getIslands():
         islands = []
         faces_left = set(selFaces)
@@ -107,7 +112,7 @@ def main(context, operator, square = False, snapToClosest = False):
             DeselectAll()
             f = faces_left.pop()
             for l in f.loops: l[uv_layer].select = True
-            bpy.ops.uv.select_linked(extend=True)
+            selectLinked()
             linked = [f for f in bm.faces if isFaceSelected(f)]
             current_island = list(set(selFaces) & set(linked))
             islands.append(current_island)
@@ -120,24 +125,14 @@ def main(context, operator, square = False, snapToClosest = False):
 
     islands = getIslands()
     for island_faces in islands:
-        for face in island_faces:
-            targetFace = bm.faces.active
-            if (targetFace is None or
-               len(islands) > 1 or
-               targetFace.select is False or
-               len(targetFace.verts) is not 4):
-                   targetFace = island_faces[0]
+        targetFace = bm.faces.active
+        if (targetFace is None or
+            len(islands) > 1 or
+            targetFace.select is False or
+            len(targetFace.verts) is not 4):
+                targetFace = island_faces[0]
+        main2(targetFace, island_faces)
 
-             #if targetFace is None or targetFace.select is False or :
-#                targetFace = island_faces[0]
-#            else:
-#                for l in targetFace.loops:
-#                    if l[uv_layer].select is False: 
-#                        targetFace = island_faces[0]
-#                        break 
-
-        main2 (targetFace, island_faces)
-    
     if noEdge is False:
         #edge has ripped so we connect it back 
         for ev in edgeVerts:
