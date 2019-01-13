@@ -100,6 +100,7 @@ def main(context, operator, square = False, snapToClosest = False):
     for island_faces in islands:
         targetFace = bm.faces.active
         if (targetFace is None or
+            targetFace not in island_faces or
             len(islands) > 1 or
             targetFace.select is False or
             len(targetFace.verts) is not 4):
