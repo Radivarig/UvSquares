@@ -137,9 +137,6 @@ def ShapeFace(uv_layer, operator, targetFace, vertsDict, square):
     lucv, ldcv, rucv, rdcv = Corners(corners)
     
     cct = CursorClosestTo([lucv, ldcv, rdcv, rucv])
-    if cct is None: 
-        cct.x, cct.y = lucv.x, lucv.y 
-    
     MakeUvFaceEqualRectangle(vertsDict, lucv, rucv, rdcv, ldcv, cct, square)
     return
 
@@ -656,11 +653,9 @@ def ImageRatio():
             break
     return ratioX, ratioY
 
-def CursorClosestTo(verts, allowedError = 0.025):
+def CursorClosestTo(verts):
     ratioX, ratioY = ImageRatio()
-    
-    #any length that is certantly not smaller than distance of the closest
-    min = 1000
+    min = float('inf')
     minV = verts[0]
     for v in verts:
         if v is None: continue
@@ -671,9 +666,7 @@ def CursorClosestTo(verts, allowedError = 0.025):
                 if (hyp < min):
                     min = hyp
                     minV = v
-    
-    if min is not 1000: return minV
-    return None
+    return minV
 
 def SetAll2dCursorsTo(x,y):
     last_area = bpy.context.area.type
