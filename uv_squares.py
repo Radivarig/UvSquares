@@ -141,8 +141,8 @@ def ShapeFace(uv_layer, operator, targetFace, vertsDict, square):
     return
 
 def MakeUvFaceEqualRectangle(vertsDict, lucv, rucv, rdcv, ldcv, startv, square = False):
-    ratioX, ratioY = ImageRatio()
-    ratio = ratioX/ratioY
+    sizeX, sizeY = ImageSize()
+    ratio = sizeX/sizeY
     
     if startv is None: startv = lucv.uv
     elif AreVertsQuasiEqual(startv, rucv): startv = rucv.uv
@@ -643,7 +643,7 @@ def Corners(corners):
     
     return leftUp, leftDown, rightUp, rightDown
 
-def ImageRatio():
+def ImageSize():
     ratioX, ratioY = 256,256
     for a in bpy.context.screen.areas:
         if a.type == 'IMAGE_EDITOR':
@@ -654,7 +654,9 @@ def ImageRatio():
     return ratioX, ratioY
 
 def CursorClosestTo(verts):
-    ratioX, ratioY = ImageRatio()
+    sizeX, sizeY = ImageSize()
+    if bpy.app.version >= (2, 80, 0):
+        sizeX, sizeY = 1,1
     min = float('inf')
     minV = verts[0]
     for v in verts:
@@ -662,7 +664,7 @@ def CursorClosestTo(verts):
         for area in bpy.context.screen.areas:
             if area.type == 'IMAGE_EDITOR':
                 loc = area.spaces[0].cursor_location
-                hyp = hypot(loc.x/ratioX -v.uv.x, loc.y/ratioY -v.uv.y)
+                hyp = hypot(loc.x/sizeX -v.uv.x, loc.y/sizeY -v.uv.y)
                 if (hyp < min):
                     min = hyp
                     minV = v
