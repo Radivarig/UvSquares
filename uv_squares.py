@@ -60,16 +60,6 @@ def main(context, operator, square = False, snapToClosest = False):
         if square: FollowActiveUV(operator, me, targetFace, faces, 'EVEN')
         else: FollowActiveUV(operator, me, targetFace, faces)
 
-    # multi island
-    faceToVertsDict = defaultdict(set)
-    vertToFacesDict = defaultdict(set)
-
-    for f in selFaces:
-        for l in f.loops:
-            id = l[uv_layer].uv.to_tuple(5), l.vert.index
-            faceToVertsDict[f.index].add(id)
-            vertToFacesDict[id].add(f.index)
-
     def isFaceSelected(f):
         return f.select and all(l[uv_layer].select for l in f.loops)
 
