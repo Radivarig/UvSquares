@@ -64,9 +64,7 @@ def main(context, operator, square = False, snapToClosest = False):
         return f.select and all(l[uv_layer].select for l in f.loops)
 
     def selectLinked():
-        if bpy.app.version < (2, 80, 0):
             bpy.ops.uv.select_linked()
-        else: bpy.ops.uv.select_linked(extend=True)
 
     def getIslands():
         islands = []
@@ -110,7 +108,7 @@ def main(context, operator, square = False, snapToClosest = False):
 '''def ScaleSelection(factor, pivot = 'CURSOR'):
     last_pivot = bpy.context.space_data.pivot_point
     bpy.context.space_data.pivot_point = pivot
-    bpy.ops.transform.resize(value=(factor, factor, factor), constraint_axis=(False, False, False), constraint_orientation='GLOBAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
+    bpy.ops.transform.resize(value=(factor, factor, factor), constraint_axis=(False, False, False), mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
     bpy.context.space_data.pivot_point = last_pivot
     return'''
 
@@ -440,12 +438,12 @@ def SuccessFinished(me, startTime):
     #if (elapsed >= 0.05): operator.report({'INFO'}, "UvSquares finished, elapsed:", elapsed, "s.")
     return
 
-def SymmetrySelected(axis, pivot = "MEDIAN"):
+'''def SymmetrySelected(axis, pivot = "MEDIAN"):
     last_pivot = bpy.context.space_data.pivot_point
     bpy.context.space_data.pivot_point = pivot
     bpy.ops.transform.mirror(constraint_axis=(True, False, False), constraint_orientation='GLOBAL', proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
     bpy.context.space_data.pivot_point = last_pivot
-    return
+    return'''
 
 def AreVectsLinedOnAxis(verts):
     areLinedX = True
@@ -588,9 +586,9 @@ def ScaleTo0(axis):
     for area in bpy.context.screen.areas:
         if area.type == 'IMAGE_EDITOR':
             if axis is 'Y':
-                bpy.ops.transform.resize(value=(1, 0, 1), constraint_axis=(False, True, False), constraint_orientation='GLOBAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
+                bpy.ops.transform.resize(value=(1, 0, 1), constraint_axis=(False, True, False), mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
             else:
-                bpy.ops.transform.resize(value=(0, 1, 1), constraint_axis=(True, False, False), constraint_orientation='GLOBAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
+                bpy.ops.transform.resize(value=(0, 1, 1), constraint_axis=(True, False, False), mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
                 
 
     bpy.context.space_data.pivot_point = last_pivot
@@ -669,7 +667,7 @@ def SetAll2dCursorsTo(x,y):
     bpy.context.area.type = last_area
     return
 
-def RotateSelected(angle, pivot = None):
+'''def RotateSelected(angle, pivot = None):
     if pivot is None:
         pivot = "MEDIAN"
    
@@ -687,7 +685,7 @@ def RotateSelected(angle, pivot = None):
     bpy.context.space_data.pivot_point = last_pivot
     bpy.context.area.type = last_area
     
-    return
+    return'''
 
 def AreVertsQuasiEqual(v1, v2, allowedError = 0.0009):
     if abs(v1.uv.x -v2.uv.x) < allowedError and abs(v1.uv.y -v2.uv.y) < allowedError:
