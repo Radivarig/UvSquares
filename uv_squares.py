@@ -17,8 +17,8 @@ bl_info = {
     "name": "UV Squares",
     "description": "UV Editor tool for reshaping selection to grid.",
     "author": "Reslav Hollos",
-    "version": (1, 5, 0),
-    "blender": (2, 71, 0),
+    "version": (1, 5, 1),
+    "blender": (2, 80, 0),
     "category": "Mesh",
     #"location": "UV Image Editor > UVs > UVs to grid of squares",
     #"warning": "",
@@ -49,7 +49,7 @@ def main(context, operator, square = False, snapToClosest = False):
     me = obj.data
     bm = bmesh.from_edit_mesh(me)
     uv_layer = bm.loops.layers.uv.verify()
-    bm.faces.layers.tex.verify()  # currently blender needs both layers.
+    bm.faces.layers.face_map.verify()  # currently blender needs both layers.
 
     face_act = bm.faces.active    
     targetFace = face_act
@@ -714,7 +714,7 @@ def RipUvFaces(context, operator):
     bm = bmesh.from_edit_mesh(me)
     
     uv_layer = bm.loops.layers.uv.verify()
-    bm.faces.layers.tex.verify()  # currently blender needs both layers.
+    bm.faces.layers.face_map.verify()  # currently blender needs both layers.
        
     selFaces = []
     
@@ -764,7 +764,7 @@ def JoinUvFaces(context, operator):
     bm = bmesh.from_edit_mesh(me)
     
     uv_layer = bm.loops.layers.uv.verify()
-    bm.faces.layers.tex.verify()  # currently blender needs both layers.
+    bm.faces.layers.face_map.verify()  # currently blender needs both layers.
     
     vertsDict = defaultdict(list)        #dict 
              
@@ -896,12 +896,13 @@ def menu_func_uv_squares_by_shape(self, context): self.layout.operator(UvSquares
 def menu_func_face_rip(self, context): self.layout.operator(RipFaces.bl_idname)
 def menu_func_face_join(self, context): self.layout.operator(JoinFaces.bl_idname)
     
-class UvSquaresPanel(bpy.types.Panel):
+class UVS_PT_UvImageEditor(bpy.types.Panel):
     """UvSquares Panel"""
     bl_label = "UV Squares"
     bl_space_type = 'IMAGE_EDITOR'
-    bl_region_type = 'TOOLS'
-
+    bl_region_type = 'UI'
+    bl_category = "UV Squares"
+    
     def draw(self, context):
         layout = self.layout
 
@@ -910,13 +911,13 @@ class UvSquaresPanel(bpy.types.Panel):
         split = layout.split()
         col = split.column(align=True)
         col.operator(SnapToAxis.bl_idname, text="Snap to Axis (X or Y)", icon = "ARROW_LEFTRIGHT")
-        col.operator(SnapToAxisWithEqual.bl_idname, text="Snap with Equal Distance", icon = "ALIGN")
+        col.operator(SnapToAxisWithEqual.bl_idname, text="Snap with Equal Distance", icon = "TRACKING_FORWARDS_SINGLE")
         
         row = layout.row()
         row.label(text="Convert \"Rectangle\" (4 corners):")
         split = layout.split()
         col = split.column(align=True)
-        col.operator(UvSquaresByShape.bl_idname, text="To Grid By Shape", icon = "GRID")
+        col.operator(UvSquaresByShape.bl_idname, text="To Grid By Shape", icon = "MESH_GRID")
         col.operator(UvSquares.bl_idname, text="To Square Grid", icon = "UV_FACESEL")
       
         split = layout.split()
@@ -935,9 +936,10 @@ class UvSquaresPanel(bpy.types.Panel):
         col.operator(JoinFaces.bl_idname, text="Snap to Closest Unselected", icon = "SNAP_INCREMENT")
         row = layout.row()
         row.label(text="V - Join (Stitch), I -Toggle Islands")
-    
+
+
 def register():
-    bpy.utils.register_class(UvSquaresPanel)
+    bpy.utils.register_class(UVS_PT_UvImageEditor)
     bpy.utils.register_class(UvSquares)
     bpy.utils.register_class(UvSquaresByShape)
     bpy.utils.register_class(RipFaces)
@@ -966,10 +968,9 @@ def register():
         kmi = km.keymap_items.new(JoinFaces.bl_idname, 'V', 'PRESS', alt=True, shift=True)
         addon_keymaps.append((km, kmi))
     
-    
 
 def unregister():
-    bpy.utils.unregister_class(UvSquaresPanel)
+    bpy.utils.unregister_class(UVS_PT_UvImageEditor)
     bpy.utils.unregister_class(UvSquares)
     bpy.utils.unregister_class(UvSquaresByShape)
     bpy.utils.unregister_class(RipFaces)
@@ -990,18 +991,3 @@ def unregister():
 
 if __name__ == "__main__":
     register()
-    
-
-
-
-
-
-
-
-
- 
-
-
-
-
-
