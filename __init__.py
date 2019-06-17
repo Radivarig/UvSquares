@@ -121,7 +121,8 @@ class UV_PT_UvSquaresPanel(bpy.types.Panel):
     """UvSquares Panel"""
     bl_label = "UV Squares"
     bl_space_type = 'IMAGE_EDITOR'
-    bl_region_type = 'TOOLS'
+    bl_region_type = 'UI'
+    bl_category = 'UV Squares'
 
     def draw(self, context):
         layout = self.layout
