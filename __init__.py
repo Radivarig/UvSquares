@@ -33,7 +33,7 @@ bl_info = {
 
 
 def register():
-    bpy.utils.register_class(UvSquaresPanel)
+    bpy.utils.register_class(UVS_PT_UvImageEditor)
     bpy.utils.register_class(UvSquares)
     bpy.utils.register_class(UvSquaresByShape)
     bpy.utils.register_class(RipFaces)
