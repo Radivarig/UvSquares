@@ -64,7 +64,7 @@ def register():
 
 
 def unregister():
-    bpy.utils.unregister_class(UvSquaresPanel)
+    bpy.utils.unregister_class(UVS_PT_UvImageEditor)
     bpy.utils.unregister_class(UvSquares)
     bpy.utils.unregister_class(UvSquaresByShape)
     bpy.utils.unregister_class(RipFaces)
