@@ -22,7 +22,8 @@ bl_info = {
     "author": "Reslav Hollos",
     "version": (1, 9, 0),
     "blender": (2, 80, 0),
-    "category": "Mesh",
+    "location": "UV Editor > N Panel > UV Squares",
+    "category": "UV",
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/Scripts/UV/Uv_Squares"
 }
 
