@@ -133,14 +133,14 @@ class UV_PT_UvSquaresPanel(bpy.types.Panel):
         split = layout.split()
         col = split.column(align=True)
         col.operator(UV_PT_SnapToAxis.bl_idname, text="Snap to Axis (X or Y)", icon = "ARROW_LEFTRIGHT")
-        col.operator(UV_PT_SnapToAxisWithEqual.bl_idname, text="Snap with Equal Distance", icon = "KEY_DEHLT")
+        col.operator(UV_PT_SnapToAxisWithEqual.bl_idname, text="Snap with Equal Distance", icon = "THREE_DOTS")
 
         row = layout.row()
         row.label(text="Convert \"Rectangle\" (4 corners):")
         split = layout.split()
         col = split.column(align=True)
-        col.operator(UV_PT_UvSquaresByShape.bl_idname, text="To Grid By Shape", icon = "GRID")
-        col.operator(UV_PT_UvSquares.bl_idname, text="To Square Grid", icon = "UV_FACESEL")
+        col.operator(UV_PT_UvSquaresByShape.bl_idname, text="To Grid By Shape", icon = "UV_FACESEL")
+        col.operator(UV_PT_UvSquares.bl_idname, text="To Square Grid", icon = "GRID")
 
         split = layout.split()
         col = split.column(align=True)
