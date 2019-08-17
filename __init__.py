@@ -20,7 +20,7 @@ bl_info = {
     "name": "UV Squares",
     "description": "UV Editor tool for reshaping selection to grid.",
     "author": "Reslav Hollos",
-    "version": (1, 8, 2),
+    "version": (1, 9, 0),
     "blender": (2, 80, 0),
     "category": "Mesh",
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/Scripts/UV/Uv_Squares"
