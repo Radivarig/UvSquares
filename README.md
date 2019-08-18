@@ -51,4 +51,4 @@ Notes
 * Snaps selected vertices to closest non selected
     * For faces, if you want to connect islands back to their original place - use stitch (shortcut: V, while stitching press I to toggle island)
 
-For any questions, bug reports or suggestions please contact me at **reslav.hollos (a t) gmail (d o t) com**
+For any questions, bug reports or suggestions please contact me at **reslav.hollos@gmail.com**
