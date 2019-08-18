@@ -4,7 +4,7 @@ Blender's UV Editor tool that reshapes UV selection into grid.
 
 Installation
 --
-Go to `Edit > Preferences > Addons > Install` and select .zip file (do not unzip!)
+Go to `Edit > Preferences > Addons > Install` and either select .zip file or the unzipped `uv_squares.py` file.
 
 Location
 --
