@@ -51,4 +51,7 @@ Notes
 * Snaps selected vertices to closest non selected
     * For faces, if you want to connect islands back to their original place - use stitch (shortcut: V, while stitching press I to toggle island)
 
+Development
+* When bumping versions increment both `bl_info` objects, one in `__init__.py` which is used for .zip install, and another in the main `uv_squares.py` file.
+
 For any questions, bug reports or suggestions please contact me at **reslav.hollos@gmail.com**
