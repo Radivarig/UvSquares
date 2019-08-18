@@ -20,7 +20,7 @@ Features
     * make them **equally** distanced
 * **Rip** faces (deselect vertices from unselected faces, as if there were seams)
 * Join selected vertices to any closest unselected vertices
-* Select single vertex and snap 3d cursor to it
+* Select single vertex and snap 2d cursor to it
 
 Shortcuts
 --
