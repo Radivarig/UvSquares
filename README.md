@@ -1,23 +1,32 @@
 Uv Squares
 ==
-Blender's UV Editor tool that reshapes UV selection into grid. 
+Blender's UV Editor tool that reshapes UV selection into grid.
+
+Installation
+--
+Go to `Edit > Preferences > Addons > Install` and select .zip file (do not unzip!)
+
+Location
+--
+`UV Editor > N Panel > UV Squares`
 
 Features
 --
-(Best place to start is **toolbar**)
 * Reshape selected UV faces (quads) to **grid** of either:
-    * equivalent **squares** 
-    * or by respect to **shape**
-* Align sequenced vertices on **axis** (X or Y axis is determined by slope automatically) :
+    * equivalent **squares** (each square area is the same)
+    * or by respect to **shape** of an active quad (area of rectangles can differ but they fit into straight lines)
+* convert multiple islands at once (select more than one separate UV chunk)
+* Align sequenced vertices on an **axis** (X or Y axis is determined by slope automatically):
     * make them **equally** distanced
-* **Rip** faces
-* Join selected vertices to any closest unselected vertices 
+* **Rip** faces (deselect vertices from unselected faces, as if there were seams)
+* Join selected vertices to any closest unselected vertices
+* Select single vertex and snap 3d cursor to it
 
 Shortcuts
 --
-* [**grid**]/[**aligning**] is **alt + [E]** 
-* Rip faces is **alt + [V]**
-* Join vertices is **shift + alt + [V]**
+* **grid**/**aligning** is **Alt + E** 
+* Rip faces is **Alt + V**
+* Join vertices is **Shift + Alt + V**
 
 Notes
 --
@@ -31,8 +40,8 @@ Notes
     
 **Reshaping to grid**
 * Works on any UV selection shape of quad faces
-* You can specify active quad by making it the last selected face, if not one face will automatically be taken as reference quad 
-* 2d cursor is snapped to closest corner and is determining the direction for calculating the length of start and end of grid as well as **length** of one unit for square grid
+* You can specify an **active quad** by making it the last selected face. If not, one face will **automatically** be taken
+* 2d cursor is snapped to closest **corner** and is determining the direction for calculating the length of start and end of grid as well as **length** of one unit for square grid
 
 **Rip faces**
 * Rip/separate any selected faces
@@ -42,4 +51,4 @@ Notes
 * Snaps selected vertices to closest non selected
     * For faces, if you want to connect islands back to their original place - use stitch (shortcut: V, while stitching press I to toggle island)
 
-For any questions, bug reports or suggestions please contact me at **reslav.hollos@gmail.com**
+For any questions, bug reports or suggestions please contact me at **reslav.hollos (a t) gmail (d o t) com**
