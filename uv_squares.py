@@ -755,7 +755,7 @@ def JoinUvFaces(context, operator):
     vertsDict = defaultdict(list)        #dict 
              
     #TODO: radius by image scale
-    radius = 0.02
+    radius = 0.002
     
     for f in bm.faces:
         for l in f.loops:
@@ -766,7 +766,7 @@ def JoinUvFaces(context, operator):
                vertsDict[(x,y)].append(luv)
          
     for key in vertsDict:
-        min = 1000
+        min = 1
         minV = None
         
         for f in bm.faces:
@@ -779,7 +779,7 @@ def JoinUvFaces(context, operator):
                         minV = luv
                         minV.select = True
         
-            if min is not 1000:
+            if min is not 1:
                 for v in vertsDict[(key[0], key[1])]:
                     v = v.uv
                     v.x = minV.uv.x
