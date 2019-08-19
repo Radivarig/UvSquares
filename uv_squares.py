@@ -474,7 +474,7 @@ def SuccessFinished(me, startTime):
 def AreVectsLinedOnAxis(verts):
     areLinedX = True
     areLinedY = True
-    allowedError = 0.0009
+    allowedError = 0.00001
     valX = verts[0].uv.x
     valY = verts[0].uv.y
     for v in verts:
@@ -492,7 +492,7 @@ def MakeEqualDistanceBetweenVertsInLine(filteredVerts, vertsDict, startv = None)
     last = verts[len(verts)-1].uv
     
     horizontal = True
-    if ((last.x - first.x) >0.0009):
+    if ((last.x - first.x) >0.00001):
         slope = (last.y - first.y)/(last.x - first.x)
         if (slope > 1) or (slope <-1):
             horizontal = False 
@@ -574,7 +574,7 @@ def ScaleTo0OnAxisAndCursor(filteredVerts, vertsDict, startv = None, horizontal 
     
     if horizontal is None:
         horizontal = True
-        if ((last.uv.x - first.uv.x) >0.0009):
+        if ((last.uv.x - first.uv.x) >0.00001):
             slope = (last.uv.y - first.uv.y)/(last.uv.x - first.uv.x)
             if (slope > 1) or (slope <-1):
                 horizontal = False 
@@ -713,7 +713,7 @@ def SetAll2dCursorsTo(x,y):
     
     return'''
 
-def AreVertsQuasiEqual(v1, v2, allowedError = 0.0009):
+def AreVertsQuasiEqual(v1, v2, allowedError = 0.00001):
     if abs(v1.uv.x -v2.uv.x) < allowedError and abs(v1.uv.y -v2.uv.y) < allowedError:
         return True
     return False
