@@ -80,46 +80,54 @@ def main(context, operator, square = False, snapToClosest = False):
             luv = l[uv_layer]
             luv.select = False
 
+    def isFaceSelected(f):
+        return f.select and all(l[uv_layer].select for l in f.loops)
+
+    def getIslandFromFace(startFace):
+        island = set()
+        toCheck = set([startFace])
+
+        while (len(toCheck)):
+            face = toCheck.pop()
+            if isFaceSelected(face) and face not in island:
+                island.add(face)
+                adjacentFaces = []
+                for e in face.edges:
+                    if e.seam is False:
+                        for f in e.link_faces:
+                            if f is not face:
+                                adjacentFaces.append(f)
+                toCheck.update(adjacentFaces)
+
+        return island
+
+    def getIslandsFromSelectedFaces(selectedFaces):
+        islands = []
+        toCheck = set(selectedFaces)
+        while(len(toCheck)):
+            face = toCheck.pop()
+            island = getIslandFromFace(face)
+            islands.append(island)
+            toCheck.difference_update(island)
+        return islands
+
+    islands = getIslandsFromSelectedFaces(selFaces)
+
     def main2 (targetFace, faces):
         ShapeFace(uv_layer, operator, targetFace, vertsDict, square)
         
         if square: FollowActiveUV(operator, me, targetFace, faces, 'EVEN')
         else: FollowActiveUV(operator, me, targetFace, faces)
 
-    def isFaceSelected(f):
-        return f.select and all(l[uv_layer].select for l in f.loops)
-
-    def selectLinked():
-            bpy.ops.uv.select_linked()
-
-    def getIslands():
-        islands = []
-        faces_left = set(selFaces)
-        while len(faces_left) > 0:
-            DeselectAll()
-            f = faces_left.pop()
-            for l in f.loops: l[uv_layer].select = True
-            selectLinked()
-            linked = [f for f in bm.faces if isFaceSelected(f)]
-            current_island = list(set(selFaces) & set(linked))
-            islands.append(current_island)
-            faces_left = [f for f in faces_left if f not in current_island]
-
-        DeselectAll()
-        for vertsKey in vertsDict.keys():
-            for v in vertsDict[vertsKey]: v.select = True
-        return islands
-
-    islands = getIslands()
-    for island_faces in islands:
+    for island in islands:
         targetFace = bm.faces.active
         if (targetFace is None or
-            targetFace not in island_faces or
+            targetFace not in island or
             len(islands) > 1 or
             targetFace.select is False or
             len(targetFace.verts) is not 4):
-                targetFace = island_faces[0]
-        main2(targetFace, island_faces)
+                targetFace = island.pop()
+        main2(targetFace, island)
 
     if noEdge is False:
         #edge has ripped so we connect it back 
@@ -460,8 +468,9 @@ def SuccessFinished(me, startTime):
     #use for backtrack of steps 
     #bpy.ops.ed.undo_push()
     bmesh.update_edit_mesh(me)
-    #elapsed = round(time.clock()-startTime, 2)
+    elapsed = round(time.clock()-startTime, 2)
     #if (elapsed >= 0.05): operator.report({'INFO'}, "UvSquares finished, elapsed:", elapsed, "s.")
+    if (elapsed >= 0.05): print("UvSquares finished, elapsed:", elapsed, "s.")
     return
 
 '''def SymmetrySelected(axis, pivot = "MEDIAN"):
