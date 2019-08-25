@@ -43,8 +43,18 @@ def main(context, operator, square = False, snapToClosest = False):
         # context.scene.tool_settings.use_uv_select_sync = False
         return
 
+
+    for obj in context.selected_objects:
+        if (obj.type == "MESH"):
+            main1(obj, context, operator, square, snapToClosest)
+
+def main1(obj, context, operator, square, snapToClosest):
+    if context.scene.tool_settings.use_uv_select_sync:
+        operator.report({'ERROR'}, "Please disable 'Keep UV and edit mesh in sync'")
+        # context.scene.tool_settings.use_uv_select_sync = False
+        return
+
     startTime = time.clock()
-    obj = context.active_object
     me = obj.data
     bm = bmesh.from_edit_mesh(me)
     uv_layer = bm.loops.layers.uv.verify()
