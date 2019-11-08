@@ -136,7 +136,8 @@ def main1(obj, context, operator, square, snapToClosest):
             len(islands) > 1 or
             targetFace.select is False or
             len(targetFace.verts) is not 4):
-                targetFace = island.pop()
+                targetFace = next(iter(island))
+        
         main2(targetFace, island)
 
     if noEdge is False:
