@@ -28,7 +28,7 @@ import bpy
 import bmesh
 from collections import defaultdict
 from math import radians, hypot
-import time
+from timeit import default_timer as timer
 
 precision = 3
 
@@ -54,7 +54,7 @@ def main1(obj, context, operator, square, snapToClosest):
         # context.scene.tool_settings.use_uv_select_sync = False
         return
 
-    startTime = time.clock()
+    startTime = timer()
     me = obj.data
     bm = bmesh.from_edit_mesh(me)
     uv_layer = bm.loops.layers.uv.verify()
@@ -479,7 +479,7 @@ def SuccessFinished(me, startTime):
     #use for backtrack of steps 
     #bpy.ops.ed.undo_push()
     bmesh.update_edit_mesh(me)
-    elapsed = round(time.clock()-startTime, 2)
+    elapsed = round(timer()-startTime, 2)
     #if (elapsed >= 0.05): operator.report({'INFO'}, "UvSquares finished, elapsed:", elapsed, "s.")
     if (elapsed >= 0.05): print("UvSquares finished, elapsed:", elapsed, "s.")
     return
@@ -739,7 +739,7 @@ def AreVertsQuasiEqual(v1, v2, allowedError = 0.00001):
     return False
 
 def RipUvFaces(context, operator):
-    startTime = time.clock()
+    startTime = timer()
     
     obj = context.active_object
     me = obj.data
@@ -789,7 +789,7 @@ def RipUvFaces(context, operator):
     return SuccessFinished(me, startTime)
 
 def JoinUvFaces(context, operator):
-    startTime = time.clock()
+    startTime = timer()
     
     obj = context.active_object
     me = obj.data
