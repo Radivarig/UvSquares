@@ -990,17 +990,18 @@ def register():
     #handle the keymap
     wm = bpy.context.window_manager
 
-    km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
-    kmi = km.keymap_items.new(UV_PT_UvSquaresByShape.bl_idname, 'E', 'PRESS', alt=True)
-    addon_keymaps.append((km, kmi))
+    if (wm.keyconfigs.addon):
+        km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
+        kmi = km.keymap_items.new(UV_PT_UvSquaresByShape.bl_idname, 'E', 'PRESS', alt=True)
+        addon_keymaps.append((km, kmi))
 
-    km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
-    kmi = km.keymap_items.new(UV_PT_RipFaces.bl_idname, 'V', 'PRESS', alt=True)
-    addon_keymaps.append((km, kmi))
+        km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
+        kmi = km.keymap_items.new(UV_PT_RipFaces.bl_idname, 'V', 'PRESS', alt=True)
+        addon_keymaps.append((km, kmi))
 
-    km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
-    kmi = km.keymap_items.new(UV_PT_JoinFaces.bl_idname, 'V', 'PRESS', alt=True, shift=True)
-    addon_keymaps.append((km, kmi))
+        km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
+        kmi = km.keymap_items.new(UV_PT_JoinFaces.bl_idname, 'V', 'PRESS', alt=True, shift=True)
+        addon_keymaps.append((km, kmi))
 
 def unregister():
     bpy.utils.unregister_class(UV_PT_UvSquaresPanel)
