@@ -43,10 +43,9 @@ def main(context, operator, square = False, snapToClosest = False):
         # context.scene.tool_settings.use_uv_select_sync = False
         return
 
-
-    for obj in context.selected_objects:
-        if (obj.type == "MESH"):
-            main1(obj, context, operator, square, snapToClosest)
+    obj = context.edit_object
+    if (obj.type == "MESH"):
+        main1(obj, context, operator, square, snapToClosest)
 
 def main1(obj, context, operator, square, snapToClosest):
     if context.scene.tool_settings.use_uv_select_sync:
