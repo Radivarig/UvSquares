@@ -21,7 +21,7 @@ bl_info = {
     "blender": (2, 80, 0),
     "location": "UV Editor > N Panel > UV Squares",
     "category": "UV",
-    "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/Scripts/UV/Uv_Squares"
+    "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/Scripts/UV/Uv_Squares",
 }
 
 from .uv_squares import *
