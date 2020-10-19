@@ -27,7 +27,7 @@ bl_info = {
 import bpy
 import bmesh
 from collections import defaultdict
-from math import radians, hypot
+from math import hypot
 from timeit import default_timer as timer
 
 precision = 3
@@ -102,7 +102,7 @@ def main1(obj, context, operator, square, snap_to_closet):
         island = set()
         to_check = set([start_face])
 
-        while (len(to_check)):
+        while to_check:
             face = to_check.pop()
             if is_face_selected(face) and face not in island:
                 island.add(face)
@@ -119,7 +119,7 @@ def main1(obj, context, operator, square, snap_to_closet):
     def get_islands_from_selected_faces(selected_faces):
         islands = []
         to_check = set(selected_faces)
-        while len(to_check):
+        while to_check:
             face = to_check.pop()
             island = get_island_from_face(face)
             islands.append(island)
@@ -157,13 +157,6 @@ def main1(obj, context, operator, square, snap_to_closet):
 
     return success_finished(me, start_time)
 
-'''def ScaleSelection(factor, pivot = 'CURSOR'):
-    last_pivot = bpy.context.space_data.pivot_point
-    bpy.context.space_data.pivot_point = pivot
-    bpy.ops.transform.resize(value=(factor, factor, factor), constraint_axis=(False, False, False), mirror=False, proportional_edit_falloff='SMOOTH', proportional_size=1)
-    bpy.context.space_data.pivot_point = last_pivot
-    return'''
-
 def shape_face(uv_layer, operator, target_face, verts_dict, square):
     corners = []
     for l in target_face.loops:
@@ -178,7 +171,6 @@ def shape_face(uv_layer, operator, target_face, verts_dict, square):
 
     cct = cursor_closest_to([lucv, ldcv, rdcv, rucv])
     make_uv_face_equal_rectangle(verts_dict, lucv, rucv, rdcv, ldcv, cct, square)
-    return
 
 def make_uv_face_equal_rectangle(verts_dict, lucv, rucv, rdcv, ldcv, startv, square = False):
     size_x, size_y = get_image_size()
@@ -247,8 +239,6 @@ def make_uv_face_equal_rectangle(verts_dict, lucv, rucv, rdcv, ldcv, startv, squ
     for v in verts_dict[x,y]:
         v.uv.x = curr_row_x
         v.uv.y = curr_row_y - final_scale_y
-
-    return
 
 def snap_cursor_to_closest_selected(filtered_verts):
     # TODO: snap to closest selected
@@ -496,13 +486,6 @@ def success_finished(me, start_time):
     if elapsed >= 0.05:
         print("UvSquares finished, elapsed:", elapsed, "s.")
 
-'''def SymmetrySelected(axis, pivot = "MEDIAN"):
-    last_pivot = bpy.context.space_data.pivot_point
-    bpy.context.space_data.pivot_point = pivot
-    bpy.ops.transform.mirror(constraint_axis=(True, False, False), constraint_orientation='GLOBAL', proportional_edit_falloff='SMOOTH', proportional_size=1)
-    bpy.context.space_data.pivot_point = last_pivot
-    return'''
-
 def are_vects_lined_on_axis(verts) -> bool:
     are_lined_x = True
     are_lined_y = True
@@ -586,7 +569,6 @@ def make_equal_distance_between_verts_in_line(filtered_verts, verts_dict, startv
                 vert.uv.y = current_y
 
             current_y = current_y - final_scale
-    return
 
 def verts_dict_for_line(uv_layer, bm, sel_verts, verts_dict):
     for f in bm.faces:
@@ -597,7 +579,6 @@ def verts_dict_for_line(uv_layer, bm, sel_verts, verts_dict):
                     y = round(luv.uv.y, precision)
 
                     verts_dict[x, y].append(luv)
-    return
 
 def scale_to_0_on_axis_and_cursor(filtered_verts, verts_dict, startv = None, horizontal = None):
 
@@ -624,7 +605,6 @@ def scale_to_0_on_axis_and_cursor(filtered_verts, verts_dict, startv = None, hor
         set_all_2d_cursors_to(startv.uv.x, startv.uv.y)
         # scale to 0 on Y
         scale_to_0('Y')
-        return
 
     else:
         # sort by .y
@@ -639,7 +619,6 @@ def scale_to_0_on_axis_and_cursor(filtered_verts, verts_dict, startv = None, hor
         set_all_2d_cursors_to(startv.uv.x, startv.uv.y)
         # scale to 0 on X
         scale_to_0('X')
-        return
 
 def scale_to_0(axis):
     last_area = bpy.context.area.type
@@ -655,7 +634,6 @@ def scale_to_0(axis):
                 bpy.ops.transform.resize(value=(0, 1, 1), constraint_axis=(True, False, False), mirror=False, proportional_edit_falloff='SMOOTH', proportional_size=1)
 
     bpy.context.space_data.pivot_point = last_pivot
-    return
 
 
 def hypot_vert(v1, v2):
@@ -729,27 +707,6 @@ def set_all_2d_cursors_to(x,y):
     bpy.ops.uv.cursor_set(location=(x, y))
 
     bpy.context.area.type = last_area
-    return
-
-'''def RotateSelected(angle, pivot = None):
-    if pivot is None:
-        pivot = "MEDIAN"
-
-    last_area = bpy.context.area.type
-    bpy.context.area.type = 'IMAGE_EDITOR'
-
-    last_pivot = bpy.context.space_data.pivot_point
-    bpy.context.space_data.pivot_point = pivot
-
-    for area in bpy.context.screen.areas:
-        if area.type == 'IMAGE_EDITOR':
-            bpy.ops.transform.rotate(value=radians(angle), axis=(-0, -0, -1), constraint_axis=(False, False, False), constraint_orientation='LOCAL', mirror=False, proportional_edit_falloff='SMOOTH', proportional_size=1)
-            break
-
-    bpy.context.space_data.pivot_point = last_pivot
-    bpy.context.area.type = last_area
-
-    return'''
 
 def are_verts_quasi_equal(v1, v2, allowed_error = 0.00001):
     if abs(v1.uv.x -v2.uv.x) < allowed_error and abs(v1.uv.y - v2.uv.y) < allowed_error:
@@ -861,6 +818,7 @@ class UV_PT_UvSquares(bpy.types.Operator):
     bl_idname = "uv.uv_squares"
     bl_label = "UVs to grid of squares"
     bl_options = {'REGISTER', 'UNDO'}
+
     @classmethod
     def poll(cls, context):
         return context.mode == 'EDIT_MESH'
