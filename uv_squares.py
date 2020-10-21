@@ -27,8 +27,9 @@ bl_info = {
 import bpy
 import bmesh
 from collections import defaultdict
-from math import hypot
+from math import hypot, isclose
 from timeit import default_timer as timer
+from typing import List
 
 precision = 3
 
@@ -183,7 +184,7 @@ def shape_face(uv_layer, operator, target_face, verts_dict, square):
         # operator.report({'ERROR'}, "bla")
         return
 
-    lucv, ldcv, rucv, rdcv = Corners(corners)
+    lucv, ldcv, rucv, rdcv = get_corners(corners)
 
     cct = cursor_closest_to([lucv, ldcv, rdcv, rucv])
     make_uv_face_equal_rectangle(verts_dict, lucv, rucv, rdcv, ldcv, cct, square)
@@ -271,9 +272,9 @@ def snap_cursor_to_closest_selected(filtered_verts):
 
 
 def lists_of_verts(uv_layer, bm):
-    edge_verts = []
-    all_edge_verts = []
-    filtered_verts = []
+    edge_verts: List[bmesh.types.BMLoopUV] = []
+    all_edge_verts: List[bmesh.types.BMLoopUV] = []
+    filtered_verts: List[bmesh.types.BMLoopUV] = []
     sel_faces = []
     non_quad_faces = []
     verts_dict = defaultdict(list)
@@ -516,13 +517,12 @@ def success_finished(me, start_time):
 def are_vects_lined_on_axis(verts) -> bool:
     are_lined_x = True
     are_lined_y = True
-    allowed_error = 0.00001
     val_x = verts[0].uv.x
     val_y = verts[0].uv.y
     for v in verts:
-        if abs(val_x - v.uv.x) > allowed_error:
+        if not isclose(val_x, v.uv.x):
             are_lined_x = False
-        if abs(val_y - v.uv.y) > allowed_error:
+        if not isclose(val_y, v.uv.y):
             are_lined_y = False
     return are_lined_x or are_lined_y
 
@@ -536,9 +536,9 @@ def make_equal_distance_between_verts_in_line(filtered_verts, verts_dict, startv
     last = verts[-1].uv
 
     horizontal = True
-    if (last.x - first.x) > 0.00001:
+    if not isclose(last.x, first.x):
         slope = (last.y - first.y) / (last.x - first.x)
-        if (slope > 1) or (slope < -1):
+        if abs(slope) > 1:
             horizontal = False
     else:
         horizontal = False
@@ -575,7 +575,7 @@ def make_equal_distance_between_verts_in_line(filtered_verts, verts_dict, startv
 
     if horizontal:
         first = verts[0]
-        last = verts[len(verts) - 1]
+        last = verts[-1]
 
         for v in verts:
             v = v.uv
@@ -613,7 +613,6 @@ def verts_dict_for_line(uv_layer, bm, sel_verts, verts_dict):
 def scale_to_0_on_axis_and_cursor(
     filtered_verts, verts_dict, startv=None, horizontal=None
 ):
-
     verts = filtered_verts
     # sort by .x
     verts.sort(key=lambda x: x.uv[0])
@@ -623,7 +622,7 @@ def scale_to_0_on_axis_and_cursor(
 
     if horizontal is None:
         horizontal = True
-        if (last.uv.x - first.uv.x) > 0.00001:
+        if not isclose(last.uv.x, first.uv.x):
             slope = (last.uv.y - first.uv.y) / (last.uv.x - first.uv.x)
             if abs(slope) > 1:
                 horizontal = False
@@ -686,7 +685,7 @@ def hypot_vert(v1, v2):
     return hyp
 
 
-def Corners(corners):
+def get_corners(corners):
     first_highest = corners[0]
     for c in corners:
         if c.uv.y > first_highest.uv.y:
@@ -734,7 +733,7 @@ def cursor_closest_to(verts):
     size_x, size_y = get_image_size()
     if bpy.app.version >= (2, 80, 0):
         size_x = size_y = 1
-    min = float("inf")
+    min_hypot = float("inf")
     min_v = verts[0]
     for v in verts:
         if v is None:
@@ -743,8 +742,8 @@ def cursor_closest_to(verts):
             if area.type == "IMAGE_EDITOR":
                 loc = area.spaces[0].cursor_location
                 hyp = hypot(loc.x / size_x - v.uv.x, loc.y / size_y - v.uv.y)
-                if hyp < min:
-                    min = hyp
+                if hyp < min_hypot:
+                    min_hypot = hyp
                     min_v = v
     return min_v
 
@@ -758,13 +757,8 @@ def set_all_2d_cursors_to(x, y):
     bpy.context.area.type = last_area
 
 
-def are_verts_quasi_equal(v1, v2, allowed_error=0.00001):
-    if (
-        abs(v1.uv.x - v2.uv.x) < allowed_error
-        and abs(v1.uv.y - v2.uv.y) < allowed_error
-    ):
-        return True
-    return False
+def are_verts_quasi_equal(v1, v2):
+    return isclose(v1.uv.x, v2.uv.x) and isclose(v1.uv.y, v2.uv.y)
 
 
 def rip_uv_faces(context, operator):
@@ -843,7 +837,7 @@ def join_uv_faces(context, operator):
                 verts_dict[x, y].append(luv)
 
     for key in verts_dict:
-        min = 1
+        min_hypot = 1
         min_v = None
 
         for f in bm.faces:
@@ -854,12 +848,12 @@ def join_uv_faces(context, operator):
                         verts_dict[key[0], key[1]][0].uv.x - luv.uv.x,
                         verts_dict[key[0], key[1]][0].uv.y - luv.uv.y,
                     )
-                    if (hyp <= min) and hyp < radius:
-                        min = hyp
+                    if (hyp <= min_hypot) and hyp < radius:
+                        min_hypot = hyp
                         min_v = luv
                         min_v.select = True
 
-            if min != 1:
+            if min_hypot != 1:
                 for v in verts_dict[(key[0], key[1])]:
                     v = v.uv
                     v.x = min_v.uv.x
@@ -965,6 +959,7 @@ class UV_PT_SnapToAxisWithEqual(bpy.types.Operator):
 
     def execute(self, context):
         main(context, self)
+        # wtf, first pass aligns vertices, second pass does equal spacing
         main(context, self)
         return {"FINISHED"}
 
