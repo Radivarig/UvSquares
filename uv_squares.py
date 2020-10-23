@@ -1047,15 +1047,28 @@ class UvVertexCollection:
             new_dist = dist + 1
             q.extend((new_vert, new_dist) for new_vert in new_verts)
 
-    def sort_vertices(self) -> List[UvVertex]:
+    def sort_vertices(self) -> List[List[UvVertex]]:
+        """
+        Returns nested lists to support disconnected sets of vertices
+        """
         if not self.vertices:
-            return []
+            return [[]]
 
-        arbitrary_first_vertex = next(iter(self.vertices))
-        first_bfs_distances = list(self.bfs_traverse(arbitrary_first_vertex))
-        farthest = max(first_bfs_distances, key=itemgetter(1))[0]
-        second_bfs_distances = list(self.bfs_traverse(farthest))
-        print(second_bfs_distances)
+        sorted_vertex_subsets = []
+        unsorted_vertices = self.vertices.copy()
+        while unsorted_vertices:
+            arbitrary_first_vertex = next(iter(unsorted_vertices))
+            first_bfs_distances = self.bfs_traverse(arbitrary_first_vertex)
+            farthest = max(first_bfs_distances, key=itemgetter(1))[0]
+            second_bfs_distances = self.bfs_traverse(farthest)
+            # BFS traversal ensures that verts are sorted by distance already
+            verts, distances = list(zip(*second_bfs_distances))
+            if len(set(distances)) < len(distances):
+                raise ValueError("Found non-linear vertex set")
+            sorted_vertex_subsets.append(verts)
+            unsorted_vertices -= set(verts)
+
+        return sorted_vertex_subsets
 
 
 class UV_PT_SnapToAxisPreserveDist(bpy.types.Operator):
@@ -1082,7 +1095,10 @@ class UV_PT_SnapToAxisPreserveDist(bpy.types.Operator):
 
         for obj in selected_objects:
             if obj.type == "MESH":
-                self.align(context, obj)
+                try:
+                    self.align(context, obj)
+                except ValueError as e:
+                    self.report({"ERROR"}, e.args[0])
 
         return {"FINISHED"}
 
