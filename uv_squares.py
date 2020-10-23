@@ -24,9 +24,11 @@ bl_info = {
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/Scripts/UV/Uv_Squares",
 }
 
-from collections import defaultdict
+from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from math import hypot, isclose
+from operator import itemgetter
+from pprint import pprint
 from timeit import default_timer as timer
 from typing import Dict, Iterable, List, Sequence, Set, Tuple
 
@@ -969,7 +971,9 @@ class UV_PT_SnapToAxisWithEqual(bpy.types.Operator):
 @dataclass(frozen=True)
 class UvVertex:
     coordinates: Tuple[float, float]
-    bm_loops: Sequence[bmesh.types.BMLoop] = field(default_factory=list, compare=False)
+    bm_loops: Sequence[bmesh.types.BMLoop] = field(
+        default_factory=list, compare=False, repr=False
+    )
 
 
 class CoordinateVertexDict(dict):
@@ -989,34 +993,6 @@ class UvVertexCollection:
         default_factory=CoordinateVertexDict
     )
     loop_vert_mapping: Dict[bmesh.types.BMLoop, UvVertex] = field(default_factory=dict)
-
-    def get_selected_neighbors(self, v: UvVertex) -> Iterable[UvVertex]:
-        # Can't be a method on the UvVertex class, since we need to use the
-        # mapping from BMLoopUV objects to UvVertex instances
-
-        # Can't just traverse links and yield UvVertex objects when we find
-        # a selected BMLoopUV object, since we need to traverse all loops that
-        # a vertex is part of, and we will likely encounter each UvVertex
-        # more than once. Could separate this into a generator function that
-        # yields duplicate UvVertex objects, and a wrapper that just calls
-        # set(that_generator()), but I don't see any benefit
-        selected_neighbors: Set[UvVertex] = set()
-        for bml in v.bm_loops:
-            seen_loop_objs = {bml}
-            curr_loop_obj = bml
-            while True:
-                curr_loop_obj = curr_loop_obj.link_loop_next
-                if curr_loop_obj in seen_loop_objs:
-                    # back to where we started
-                    break
-
-                seen_loop_objs.add(curr_loop_obj)
-
-                selected = curr_loop_obj[self.uv_layer].select
-                if selected:
-                    selected_neighbors.add(self.loop_vert_mapping[curr_loop_obj])
-
-        return selected_neighbors
 
     @classmethod
     def populate(cls, obj):
@@ -1039,6 +1015,47 @@ class UvVertexCollection:
         self.vertices.update(self.coordinate_mapping.values())
 
         return self
+
+    def get_selected_neighbors(self, v: UvVertex) -> Set[UvVertex]:
+        # Can't be a method on the UvVertex class, since we need to use the
+        # mapping from BMLoopUV objects to UvVertex instances
+
+        # Can't just traverse links and yield UvVertex objects when we find
+        # a selected BMLoopUV object, since we need to traverse all loops that
+        # a vertex is part of, and we will likely encounter each UvVertex
+        # more than once. Could separate this into a generator function that
+        # yields duplicate UvVertex objects, and a wrapper that just calls
+        # set(that_generator()), but I don't see any benefit
+        selected_neighbors: Set[UvVertex] = set()
+        for bml in v.bm_loops:
+            loop_neighbors = [bml.link_loop_prev, bml.link_loop_next]
+
+            for ln in loop_neighbors:
+                if ln[self.uv_layer].select:
+                    selected_neighbors.add(self.loop_vert_mapping[ln])
+
+        return selected_neighbors
+
+    def bfs_traverse(self, start: UvVertex) -> Iterable[Tuple[UvVertex, int]]:
+        seen = set()
+        q = deque([(start, 0)])
+        while q:
+            v, dist = q.popleft()
+            seen.add(v)
+            yield v, dist
+            new_verts = self.get_selected_neighbors(v) - seen
+            new_dist = dist + 1
+            q.extend((new_vert, new_dist) for new_vert in new_verts)
+
+    def sort_vertices(self) -> List[UvVertex]:
+        if not self.vertices:
+            return []
+
+        arbitrary_first_vertex = next(iter(self.vertices))
+        first_bfs_distances = list(self.bfs_traverse(arbitrary_first_vertex))
+        farthest = max(first_bfs_distances, key=itemgetter(1))[0]
+        second_bfs_distances = list(self.bfs_traverse(farthest))
+        print(second_bfs_distances)
 
 
 class UV_PT_SnapToAxisPreserveDist(bpy.types.Operator):
@@ -1077,8 +1094,7 @@ class UV_PT_SnapToAxisPreserveDist(bpy.types.Operator):
             # nothing to do
             return
 
-        arbitrary_first_vert = next(iter(vert_collection.vertices))
-        neighbors = vert_collection.get_selected_neighbors(arbitrary_first_vert)
+        sorted_verts = vert_collection.sort_vertices()
 
 
 addon_keymaps = []
