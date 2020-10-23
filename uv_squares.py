@@ -874,104 +874,6 @@ def deselect_all():
     bpy.ops.uv.select_all(action="DESELECT")
 
 
-class UV_PT_UvSquares(bpy.types.Operator):
-    """Reshapes UV faces to a grid of equivalent squares"""
-
-    bl_idname = "uv.uv_squares"
-    bl_label = "UVs to grid of squares"
-    bl_options = {"REGISTER", "UNDO"}
-
-    @classmethod
-    def poll(cls, context):
-        return context.mode == "EDIT_MESH"
-
-    def execute(self, context):
-        main(context, self, True)
-        return {"FINISHED"}
-
-
-class UV_PT_UvSquaresByShape(bpy.types.Operator):
-    """Reshapes UV faces to a grid with respect to shape by length of edges around selected corner"""
-
-    bl_idname = "uv.uv_squares_by_shape"
-    bl_label = "UVs to grid with respect to shape"
-    bl_options = {"REGISTER", "UNDO"}
-
-    @classmethod
-    def poll(cls, context):
-        return context.mode == "EDIT_MESH"
-
-    def execute(self, context):
-        main(context, self)
-        return {"FINISHED"}
-
-
-class UV_PT_RipFaces(bpy.types.Operator):
-    """Rip UV faces apart"""
-
-    bl_idname = "uv.uv_face_rip"
-    bl_label = "UV face rip"
-    bl_options = {"REGISTER", "UNDO"}
-
-    @classmethod
-    def poll(cls, context):
-        return context.mode == "EDIT_MESH"
-
-    def execute(self, context):
-        rip_uv_faces(context, self)
-        return {"FINISHED"}
-
-
-class UV_PT_JoinFaces(bpy.types.Operator):
-    """Join selected UV faces to closest nonselected vertices"""
-
-    bl_idname = "uv.uv_face_join"
-    bl_label = "UV face join"
-    bl_options = {"REGISTER", "UNDO"}
-
-    @classmethod
-    def poll(cls, context):
-        return context.mode == "EDIT_MESH"
-
-    def execute(self, context):
-        join_uv_faces(context, self)
-        return {"FINISHED"}
-
-
-class UV_PT_SnapToAxis(bpy.types.Operator):
-    """Snap sequenced vertices to Axis"""
-
-    bl_idname = "uv.uv_snap_to_axis"
-    bl_label = "UV snap vertices to axis"
-    bl_options = {"REGISTER", "UNDO"}
-
-    @classmethod
-    def poll(cls, context):
-        return context.mode == "EDIT_MESH"
-
-    def execute(self, context):
-        main(context, self)
-        return {"FINISHED"}
-
-
-class UV_PT_SnapToAxisWithEqual(bpy.types.Operator):
-    """Snap sequenced vertices to Axis with Equal Distance between"""
-
-    bl_idname = "uv.uv_snap_to_axis_and_equal"
-    bl_label = "UV snap vertices to axis with equal distance between"
-    bl_options = {"REGISTER", "UNDO"}
-
-    @classmethod
-    def poll(cls, context):
-        return context.mode == "EDIT_MESH"
-
-    def execute(self, context):
-        main(context, self)
-        # wtf, first pass aligns vertices, second pass does equal spacing
-        main(context, self)
-        return {"FINISHED"}
-
-
 @dataclass(frozen=True)
 class UvVertex:
     coordinates: Tuple[float, float]
@@ -1070,6 +972,104 @@ class UvVertexCollection:
             unsorted_vertices -= set(verts)
 
         return sorted_vertex_subsets
+
+
+class UV_PT_UvSquares(bpy.types.Operator):
+    """Reshapes UV faces to a grid of equivalent squares"""
+
+    bl_idname = "uv.uv_squares"
+    bl_label = "UVs to grid of squares"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == "EDIT_MESH"
+
+    def execute(self, context):
+        main(context, self, True)
+        return {"FINISHED"}
+
+
+class UV_PT_UvSquaresByShape(bpy.types.Operator):
+    """Reshapes UV faces to a grid with respect to shape by length of edges around selected corner"""
+
+    bl_idname = "uv.uv_squares_by_shape"
+    bl_label = "UVs to grid with respect to shape"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == "EDIT_MESH"
+
+    def execute(self, context):
+        main(context, self)
+        return {"FINISHED"}
+
+
+class UV_PT_RipFaces(bpy.types.Operator):
+    """Rip UV faces apart"""
+
+    bl_idname = "uv.uv_face_rip"
+    bl_label = "UV face rip"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == "EDIT_MESH"
+
+    def execute(self, context):
+        rip_uv_faces(context, self)
+        return {"FINISHED"}
+
+
+class UV_PT_JoinFaces(bpy.types.Operator):
+    """Join selected UV faces to closest nonselected vertices"""
+
+    bl_idname = "uv.uv_face_join"
+    bl_label = "UV face join"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == "EDIT_MESH"
+
+    def execute(self, context):
+        join_uv_faces(context, self)
+        return {"FINISHED"}
+
+
+class UV_PT_SnapToAxis(bpy.types.Operator):
+    """Snap sequenced vertices to Axis"""
+
+    bl_idname = "uv.uv_snap_to_axis"
+    bl_label = "UV snap vertices to axis"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == "EDIT_MESH"
+
+    def execute(self, context):
+        main(context, self)
+        return {"FINISHED"}
+
+
+class UV_PT_SnapToAxisWithEqual(bpy.types.Operator):
+    """Snap sequenced vertices to Axis with Equal Distance between"""
+
+    bl_idname = "uv.uv_snap_to_axis_and_equal"
+    bl_label = "UV snap vertices to axis with equal distance between"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == "EDIT_MESH"
+
+    def execute(self, context):
+        main(context, self)
+        # wtf, first pass aligns vertices, second pass does equal spacing
+        main(context, self)
+        return {"FINISHED"}
 
 
 class UV_PT_SnapToAxisPreserveDist(bpy.types.Operator):
