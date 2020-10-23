@@ -24,12 +24,14 @@ bl_info = {
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/Scripts/UV/Uv_Squares",
 }
 
-import bpy
-import bmesh
 from collections import defaultdict
+from dataclasses import dataclass, field
 from math import hypot, isclose
 from timeit import default_timer as timer
-from typing import List
+from typing import Dict, Iterable, List, Sequence, Set, Tuple
+
+import bmesh
+import bpy
 
 precision = 3
 
@@ -964,6 +966,121 @@ class UV_PT_SnapToAxisWithEqual(bpy.types.Operator):
         return {"FINISHED"}
 
 
+@dataclass(frozen=True)
+class UvVertex:
+    coordinates: Tuple[float, float]
+    bm_loops: Sequence[bmesh.types.BMLoop] = field(default_factory=list, compare=False)
+
+
+class CoordinateVertexDict(dict):
+    def __missing__(self, key: Tuple[float, float]):
+        value = UvVertex(coordinates=key)
+        self[key] = value
+        return value
+
+
+@dataclass
+class UvVertexCollection:
+    obj: bpy.types.Object
+    bm: bmesh.types.BMesh
+    uv_layer: bmesh.types.BMLayerItem
+    vertices: Set[UvVertex] = field(default_factory=set)
+    coordinate_mapping: Dict[Tuple[float, float], UvVertex] = field(
+        default_factory=CoordinateVertexDict
+    )
+    loop_vert_mapping: Dict[bmesh.types.BMLoop, UvVertex] = field(default_factory=dict)
+
+    def get_selected_neighbors(self, v: UvVertex) -> Iterable[UvVertex]:
+        # Can't be a method on the UvVertex class, since we need to use the
+        # mapping from BMLoopUV objects to UvVertex instances
+
+        # Can't just traverse links and yield UvVertex objects when we find
+        # a selected BMLoopUV object, since we need to traverse all loops that
+        # a vertex is part of, and we will likely encounter each UvVertex
+        # more than once. Could separate this into a generator function that
+        # yields duplicate UvVertex objects, and a wrapper that just calls
+        # set(that_generator()), but I don't see any benefit
+        selected_neighbors: Set[UvVertex] = set()
+        for bml in v.bm_loops:
+            seen_loop_objs = {bml}
+            curr_loop_obj = bml
+            while True:
+                curr_loop_obj = curr_loop_obj.link_loop_next
+                if curr_loop_obj in seen_loop_objs:
+                    # back to where we started
+                    break
+
+                seen_loop_objs.add(curr_loop_obj)
+
+                selected = curr_loop_obj[self.uv_layer].select
+                if selected:
+                    selected_neighbors.add(self.loop_vert_mapping[curr_loop_obj])
+
+        return selected_neighbors
+
+    @classmethod
+    def populate(cls, obj):
+        bm = bmesh.from_edit_mesh(obj.data)
+        uv_layer = bm.loops.layers.uv.verify()
+
+        self = cls(obj=obj, bm=bm, uv_layer=uv_layer)
+
+        for f in bm.faces:
+            if not f.select:
+                continue
+
+            for loop in f.loops:
+                luv = loop[uv_layer]
+                if luv.select:
+                    vertex = self.coordinate_mapping[tuple(luv.uv)]
+                    vertex.bm_loops.append(loop)
+                    self.loop_vert_mapping[loop] = vertex
+
+        self.vertices.update(self.coordinate_mapping.values())
+
+        return self
+
+
+class UV_PT_SnapToAxisPreserveDist(bpy.types.Operator):
+    """Snap selected vertices to axis, preserving distance"""
+
+    bl_idname = "uv.uv_snap_to_axis_preserve_dist"
+    bl_label = "UV snap vertices to axis preserving original distances"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == "EDIT_MESH"
+
+    def execute(self, context):
+        # TODO: deduplicate
+        if context.scene.tool_settings.use_uv_select_sync:
+            self.report({"ERROR"}, "Please disable 'Keep UV and edit mesh in sync'")
+            # context.scene.tool_settings.use_uv_select_sync = False
+            return
+
+        selected_objects = context.selected_objects
+        if context.edit_object not in selected_objects:
+            selected_objects.append(context.edit_object)
+
+        for obj in selected_objects:
+            if obj.type == "MESH":
+                self.align(context, obj)
+
+        return {"FINISHED"}
+
+    def align(self, context, obj):
+        start_time = timer()
+
+        vert_collection = UvVertexCollection.populate(obj)
+        if not vert_collection.vertices:
+            # nothing to do
+            return
+
+        arbitrary_first_vert = next(iter(vert_collection.vertices))
+        neighbors = vert_collection.get_selected_neighbors(arbitrary_first_vert)
+
+
 addon_keymaps = []
 
 
@@ -1008,6 +1125,11 @@ class UV_PT_UvSquaresPanel(bpy.types.Panel):
             text="Snap with Equal Distance",
             icon="THREE_DOTS",
         )
+        col.operator(
+            UV_PT_SnapToAxisPreserveDist.bl_idname,
+            text="Snap, Preserve Distance",
+            icon="THREE_DOTS",
+        )
 
         row = layout.row()
         row.label(text='Convert "Rectangle" (4 corners):')
@@ -1048,6 +1170,7 @@ def register():
     bpy.utils.register_class(UV_PT_JoinFaces)
     bpy.utils.register_class(UV_PT_SnapToAxis)
     bpy.utils.register_class(UV_PT_SnapToAxisWithEqual)
+    bpy.utils.register_class(UV_PT_SnapToAxisPreserveDist)
 
     # menu
     bpy.types.IMAGE_MT_uvs.append(menu_func_uv_squares)
@@ -1084,6 +1207,7 @@ def unregister():
     bpy.utils.unregister_class(UV_PT_JoinFaces)
     bpy.utils.unregister_class(UV_PT_SnapToAxis)
     bpy.utils.unregister_class(UV_PT_SnapToAxisWithEqual)
+    bpy.utils.unregister_class(UV_PT_SnapToAxisPreserveDist)
 
     bpy.types.IMAGE_MT_uvs.remove(menu_func_uv_squares)
     bpy.types.IMAGE_MT_uvs.remove(menu_func_uv_squares_by_shape)
