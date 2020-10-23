@@ -1126,8 +1126,16 @@ class UV_PT_SnapToAxisPreserveDist(bpy.types.Operator):
             start_point[1 - alignment_axis] -= np.sum(distances) / 2
             new_coords = np.tile(start_point, (len(vert_subset), 1))
             new_coords[1:, np.argmax(ranges)] += np.cumsum(distances)
+            flipped = np.flip(new_coords, 0)
+            # Quick and dirty: choose vertex order by minimum total L1 distance
+            orig_dist = np.sum(abs(coordinates - new_coords))
+            flipped_dist = np.sum(abs(coordinates - flipped))
+            if orig_dist < flipped_dist:
+                coords_to_use = new_coords
+            else:
+                coords_to_use = flipped
 
-            for vert, new_pos in zip(vert_subset, new_coords):
+            for vert, new_pos in zip(vert_subset, coords_to_use):
                 for bml in vert.bm_loops:
                     bml[vert_collection.uv_layer].uv = new_pos
 
