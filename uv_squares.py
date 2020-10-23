@@ -28,12 +28,12 @@ from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from math import hypot, isclose
 from operator import itemgetter
-from pprint import pprint
 from timeit import default_timer as timer
 from typing import Dict, Iterable, List, Sequence, Set, Tuple
 
 import bmesh
 import bpy
+import numpy as np
 
 precision = 3
 
@@ -1064,7 +1064,7 @@ class UvVertexCollection:
             # BFS traversal ensures that verts are sorted by distance already
             verts, distances = list(zip(*second_bfs_distances))
             if len(set(distances)) < len(distances):
-                raise ValueError("Found non-linear vertex set")
+                raise ValueError(f"Found non-linear set of {len(distances)} vertices")
             sorted_vertex_subsets.append(verts)
             unsorted_vertices -= set(verts)
 
@@ -1110,7 +1110,28 @@ class UV_PT_SnapToAxisPreserveDist(bpy.types.Operator):
             # nothing to do
             return
 
-        sorted_verts = vert_collection.sort_vertices()
+        sorted_vert_subsets = vert_collection.sort_vertices()
+        for vert_subset in sorted_vert_subsets:
+            coordinates = np.array([vert.coordinates for vert in vert_subset])
+            min_point = np.min(coordinates, axis=0)
+            max_point = np.max(coordinates, axis=0)
+            mid_point = (min_point + max_point) / 2
+            ranges = max_point - min_point
+            # vertices will have a constant value along this axis
+            alignment_axis = np.argmin(ranges)
+            # both dimensions
+            uv_distances = coordinates[:-1] - coordinates[1:]
+            distances = np.hypot(uv_distances[:, 0], uv_distances[:, 1])
+            start_point = mid_point.copy()
+            start_point[1 - alignment_axis] -= np.sum(distances) / 2
+            new_coords = np.tile(start_point, (len(vert_subset), 1))
+            new_coords[1:, np.argmax(ranges)] += np.cumsum(distances)
+
+            for vert, new_pos in zip(vert_subset, new_coords):
+                for bml in vert.bm_loops:
+                    bml[vert_collection.uv_layer].uv = new_pos
+
+        return success_finished(obj.data, start_time)
 
 
 addon_keymaps = []
