@@ -689,6 +689,10 @@ def hypot_vert(v1, v2):
     return hyp
 
 
+def l1(a1: np.ndarray, a2: np.ndarray) -> float:
+    return np.sum(abs(a1 - a2))
+
+
 def get_corners(corners):
     first_highest = corners[0]
     for c in corners:
@@ -1047,24 +1051,21 @@ class UvVertexCollection:
             new_dist = dist + 1
             q.extend((new_vert, new_dist) for new_vert in new_verts)
 
-    def sort_vertices(self) -> List[List[UvVertex]]:
+    def sort_vertices(self) -> List[Sequence[UvVertex]]:
         """
         Returns nested lists to support disconnected sets of vertices
         """
-        if not self.vertices:
-            return [[]]
-
         sorted_vertex_subsets = []
+
         unsorted_vertices = self.vertices.copy()
         while unsorted_vertices:
             arbitrary_first_vertex = next(iter(unsorted_vertices))
             first_bfs_distances = self.bfs_traverse(arbitrary_first_vertex)
             farthest = max(first_bfs_distances, key=itemgetter(1))[0]
             second_bfs_distances = self.bfs_traverse(farthest)
-            # BFS traversal ensures that verts are sorted by distance already
             verts, distances = list(zip(*second_bfs_distances))
             if len(set(distances)) < len(distances):
-                raise ValueError(f"Found non-linear set of {len(distances)} vertices")
+                raise ValueError(f"Found non-linear vertex set, size {len(distances)}")
             sorted_vertex_subsets.append(verts)
             unsorted_vertices -= set(verts)
 
@@ -1086,7 +1087,6 @@ class UV_PT_SnapToAxisPreserveDist(bpy.types.Operator):
         # TODO: deduplicate
         if context.scene.tool_settings.use_uv_select_sync:
             self.report({"ERROR"}, "Please disable 'Keep UV and edit mesh in sync'")
-            # context.scene.tool_settings.use_uv_select_sync = False
             return
 
         selected_objects = context.selected_objects
@@ -1096,13 +1096,13 @@ class UV_PT_SnapToAxisPreserveDist(bpy.types.Operator):
         for obj in selected_objects:
             if obj.type == "MESH":
                 try:
-                    self.align(context, obj)
+                    self.align(obj)
                 except ValueError as e:
                     self.report({"ERROR"}, e.args[0])
 
         return {"FINISHED"}
 
-    def align(self, context, obj):
+    def align(self, obj):
         start_time = timer()
 
         vert_collection = UvVertexCollection.populate(obj)
@@ -1117,23 +1117,24 @@ class UV_PT_SnapToAxisPreserveDist(bpy.types.Operator):
             max_point = np.max(coordinates, axis=0)
             mid_point = (min_point + max_point) / 2
             ranges = max_point - min_point
-            # vertices will have a constant value along this axis
-            alignment_axis = np.argmin(ranges)
+            # vertices will be equally spaced along this axis and at
+            # a constant position with respect to the other
+            layout_axis = np.argmax(ranges)
             # both dimensions
             uv_distances = coordinates[:-1] - coordinates[1:]
             distances = np.hypot(uv_distances[:, 0], uv_distances[:, 1])
             start_point = mid_point.copy()
-            start_point[1 - alignment_axis] -= np.sum(distances) / 2
-            new_coords = np.tile(start_point, (len(vert_subset), 1))
-            new_coords[1:, np.argmax(ranges)] += np.cumsum(distances)
-            flipped = np.flip(new_coords, 0)
+            start_point[layout_axis] -= np.sum(distances) / 2
+            new_coords_forward = np.tile(start_point, (len(vert_subset), 1))
+            new_coords_forward[1:, layout_axis] += np.cumsum(distances)
+            new_coords_backward = np.flip(new_coords_forward, 0)
             # Quick and dirty: choose vertex order by minimum total L1 distance
-            orig_dist = np.sum(abs(coordinates - new_coords))
-            flipped_dist = np.sum(abs(coordinates - flipped))
-            if orig_dist < flipped_dist:
-                coords_to_use = new_coords
+            forward_dist = l1(coordinates, new_coords_forward)
+            backward_dist = l1(coordinates, new_coords_backward)
+            if forward_dist < backward_dist:
+                coords_to_use = new_coords_forward
             else:
-                coords_to_use = flipped
+                coords_to_use = new_coords_backward
 
             for vert, new_pos in zip(vert_subset, coords_to_use):
                 for bml in vert.bm_loops:
