@@ -1116,10 +1116,9 @@ class UV_PT_SnapToAxisPreserveDist(bpy.types.Operator):
             min_point = np.min(coordinates, axis=0)
             max_point = np.max(coordinates, axis=0)
             mid_point = (min_point + max_point) / 2
-            ranges = max_point - min_point
             # vertices will be equally spaced along this axis and at
             # a constant position with respect to the other
-            layout_axis = np.argmax(ranges)
+            layout_axis = np.argmax(max_point - min_point)
             # both dimensions
             uv_distances = coordinates[:-1] - coordinates[1:]
             distances = np.hypot(uv_distances[:, 0], uv_distances[:, 1])
