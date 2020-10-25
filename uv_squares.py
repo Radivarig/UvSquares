@@ -1123,11 +1123,20 @@ class UV_PT_SnapToAxisPreserveDist(bpy.types.Operator):
             # both dimensions
             uv_distances = coordinates[:-1] - coordinates[1:]
             distances = np.hypot(uv_distances[:, 0], uv_distances[:, 1])
-            start_point = mid_point.copy()
-            start_point[layout_axis] -= np.sum(distances) / 2
-            new_coords_forward = np.tile(start_point, (len(vert_subset), 1))
-            new_coords_forward[1:, layout_axis] += np.cumsum(distances)
-            new_coords_backward = np.flip(new_coords_forward, 0)
+            total_distance = np.sum(distances)
+            distance_cumsum = np.cumsum(distances)
+
+            # TODO: deduplicate
+            start_point_forward = mid_point.copy()
+            start_point_forward[layout_axis] -= total_distance / 2
+            new_coords_forward = np.tile(start_point_forward, (len(vert_subset), 1))
+            new_coords_forward[1:, layout_axis] += distance_cumsum
+
+            start_point_backward = mid_point.copy()
+            start_point_backward[layout_axis] += total_distance / 2
+            new_coords_backward = np.tile(start_point_backward, (len(vert_subset), 1))
+            new_coords_backward[1:, layout_axis] -= distance_cumsum
+
             # Quick and dirty: choose vertex order by minimum total L1 distance
             forward_dist = l1(coordinates, new_coords_forward)
             backward_dist = l1(coordinates, new_coords_backward)
