@@ -23,8 +23,9 @@ Features
     * or by respect to **shape** of an active quad (area of rectangles can differ but they fit into straight lines)
 * convert multiple islands at once (select more than one separate UV chunk)
 * Align sequenced vertices on an **axis** (X or Y axis is determined by slope automatically):
-    * make them **equally** distanced
-    * or, align one or more linear sequences of vertices to the appropriate axis, preserving UV distances between them
+    * simply perform alignment, or
+    * make them **equally** distanced, or
+    * align one or more linear sequences of vertices to the appropriate axis, **preserving UV distances** between them
 * **Rip** faces (deselect vertices from unselected faces, as if there were seams)
 * Join selected vertices to any closest unselected vertices
 * Select single vertex and snap 2d cursor to it
