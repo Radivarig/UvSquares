@@ -8,9 +8,9 @@ Installation
 --
 Go to `Edit > Preferences > Addons > Install` and either select .zip file or the unzipped `uv_squares.py` file.
 
-NumPy is required; this is included with Blender for Windows. On Ubuntu Linux, Blender uses the system Python
-installation, so the `python3-numpy` package must be installed through `apt`. Other Linux distributions may or
-may not package Blender similarly.
+Python >= 3.7 and NumPy are required; these are both included with Blender 2.82 for Windows. On Ubuntu Linux, Blender
+uses the system Python installation, so the `python3-numpy` package must be installed through `apt`. Other Linux
+distributions may or may not package Blender similarly.
 
 Location
 --
