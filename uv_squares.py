@@ -877,7 +877,7 @@ def deselect_all():
 @dataclass(frozen=True)
 class UvVertex:
     coordinates: Tuple[float, float]
-    bm_loops: Sequence[bmesh.types.BMLoop] = field(
+    bm_loops: List[bmesh.types.BMLoop] = field(
         default_factory=list, compare=False, repr=False
     )
 
@@ -1067,7 +1067,6 @@ class UV_PT_SnapToAxisWithEqual(bpy.types.Operator):
 
     def execute(self, context):
         main(context, self)
-        # wtf, first pass aligns vertices, second pass does equal spacing
         main(context, self)
         return {"FINISHED"}
 
