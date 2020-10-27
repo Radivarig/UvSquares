@@ -26,6 +26,7 @@ bl_info = {
 
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
+from enum import Enum
 from math import hypot, isclose
 from operator import itemgetter
 from timeit import default_timer as timer
@@ -974,6 +975,35 @@ class UvVertexCollection:
         return sorted_vertex_subsets
 
 
+def align_vertex_subset_preserve_dist(vert_subset: Sequence[UvVertex]) -> np.ndarray:
+    coordinates = np.array([vert.coordinates for vert in vert_subset])
+    min_point = np.min(coordinates, axis=0)
+    max_point = np.max(coordinates, axis=0)
+    mid_point = (min_point + max_point) / 2
+    # vertices will be equally spaced along this axis and at
+    # a constant position with respect to the other
+    layout_axis = np.argmax(max_point - min_point)
+    # both dimensions
+    uv_distances = coordinates[:-1] - coordinates[1:]
+    distances = np.hypot(uv_distances[:, 0], uv_distances[:, 1])
+    total_distance = np.sum(distances)
+    distance_cumsum = np.cumsum(distances)
+
+    # (array of new coordinates, total L1 distance)
+    new_coord_choices: List[Tuple[np.ndarray, float]] = []
+
+    for direction in [-1, 1]:
+        start_point = mid_point.copy()
+        start_point[layout_axis] -= (total_distance / 2) * direction
+        new_coords = np.tile(start_point, (len(vert_subset), 1))
+        new_coords[1:, layout_axis] += distance_cumsum * direction
+        l1_dist = l1(coordinates, new_coords)
+        new_coord_choices.append((new_coords, l1_dist))
+
+    new_coords = min(new_coord_choices, key=itemgetter(1))[0]
+    return new_coords
+
+
 class UV_PT_UvSquares(bpy.types.Operator):
     """Reshapes UV faces to a grid of equivalent squares"""
 
@@ -1111,39 +1141,8 @@ class UV_PT_SnapToAxisPreserveDist(bpy.types.Operator):
 
         sorted_vert_subsets = vert_collection.sort_vertices()
         for vert_subset in sorted_vert_subsets:
-            coordinates = np.array([vert.coordinates for vert in vert_subset])
-            min_point = np.min(coordinates, axis=0)
-            max_point = np.max(coordinates, axis=0)
-            mid_point = (min_point + max_point) / 2
-            # vertices will be equally spaced along this axis and at
-            # a constant position with respect to the other
-            layout_axis = np.argmax(max_point - min_point)
-            # both dimensions
-            uv_distances = coordinates[:-1] - coordinates[1:]
-            distances = np.hypot(uv_distances[:, 0], uv_distances[:, 1])
-            total_distance = np.sum(distances)
-            distance_cumsum = np.cumsum(distances)
-
-            # TODO: deduplicate
-            start_point_forward = mid_point.copy()
-            start_point_forward[layout_axis] -= total_distance / 2
-            new_coords_forward = np.tile(start_point_forward, (len(vert_subset), 1))
-            new_coords_forward[1:, layout_axis] += distance_cumsum
-
-            start_point_backward = mid_point.copy()
-            start_point_backward[layout_axis] += total_distance / 2
-            new_coords_backward = np.tile(start_point_backward, (len(vert_subset), 1))
-            new_coords_backward[1:, layout_axis] -= distance_cumsum
-
-            # Quick and dirty: choose vertex order by minimum total L1 distance
-            forward_dist = l1(coordinates, new_coords_forward)
-            backward_dist = l1(coordinates, new_coords_backward)
-            if forward_dist < backward_dist:
-                coords_to_use = new_coords_forward
-            else:
-                coords_to_use = new_coords_backward
-
-            for vert, new_pos in zip(vert_subset, coords_to_use):
+            new_coords = align_vertex_subset_preserve_dist(vert_subset)
+            for vert, new_pos in zip(vert_subset, new_coords):
                 for bml in vert.bm_loops:
                     bml[vert_collection.uv_layer].uv = new_pos
 
