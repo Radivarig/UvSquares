@@ -1,10 +1,16 @@
 Uv Squares
 ==
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 Blender's UV Editor tool that reshapes UV selection into grid.
 
 Installation
 --
 Go to `Edit > Preferences > Addons > Install` and either select .zip file or the unzipped `uv_squares.py` file.
+
+Python >= 3.7 and NumPy are required; these are both included with Blender 2.82 for Windows. On Ubuntu Linux, Blender
+uses the system Python installation, so the `python3-numpy` package must be installed through `apt`. Other Linux
+distributions may or may not package Blender similarly.
 
 Location
 --
@@ -17,14 +23,16 @@ Features
     * or by respect to **shape** of an active quad (area of rectangles can differ but they fit into straight lines)
 * convert multiple islands at once (select more than one separate UV chunk)
 * Align sequenced vertices on an **axis** (X or Y axis is determined by slope automatically):
-    * make them **equally** distanced
+    * simply perform alignment, or
+    * make them **equally** distanced, or
+    * align one or more linear sequences of vertices to the appropriate axis, **preserving UV distances** between them
 * **Rip** faces (deselect vertices from unselected faces, as if there were seams)
 * Join selected vertices to any closest unselected vertices
 * Select single vertex and snap 2d cursor to it
 
 Shortcuts
 --
-* **grid**/**aligning** is **Alt + E** 
+* **grid**/**aligning** is **Alt + E**
 * Rip faces is **Alt + V**
 * Join vertices is **Shift + Alt + V**
 
@@ -35,9 +43,14 @@ Notes
 * What script does here:
     * set pivot to cursor (sets it back after)
     * 2d cursor will snap to closest vertex and the alignment will be made at that verts x/y value, depending on the axis
-    * restrict scale to axis (recognize X or Y by the slope) 
+    * restrict scale to axis (recognize X or Y by the slope)
     * scale to 0 to where the cursor has snapped
-    
+
+**Aligning to axis, preserving UV distance**
+* Each connected set of selected vertices will be aligned to the axis appropriate for that subset.
+* Only simple lines of vertices can be aligned with this method; the alignment method will stop and raise an error if
+  a branching vertex set is detected.
+
 **Reshaping to grid**
 * Works on any UV selection shape of quad faces
 * You can specify an **active quad** by making it the last selected face. If not, one face will **automatically** be taken
