@@ -65,15 +65,15 @@ def main1(obj, context, operator, square, snapToClosest):
 
     edgeVerts, filteredVerts, selFaces, nonQuadFaces, vertsDict, noEdge = ListsOfVerts(uv_layer, bm)
     
-    if len(filteredVerts) is 0: return 
-    if len(filteredVerts) is 1: 
+    if len(filteredVerts) == 0: return 
+    if len(filteredVerts) == 1: 
         SnapCursorToClosestSelected(filteredVerts)
         return 
     
     cursorClosestTo = CursorClosestTo(filteredVerts)
     #line is selected
     
-    if len(selFaces) is 0:
+    if len(selFaces) == 0:
         if snapToClosest is True:
             SnapCursorToClosestSelected(filteredVerts)
             return
@@ -138,7 +138,7 @@ def main1(obj, context, operator, square, snapToClosest):
             targetFace not in island or
             len(islands) > 1 or
             targetFace.select is False or
-            len(targetFace.verts) is not 4):
+            len(targetFace.verts) != 4):
                 targetFace = next(iter(island))
         
         main2(targetFace, island)
@@ -166,7 +166,7 @@ def ShapeFace(uv_layer, operator, targetFace, vertsDict, square):
         luv = l[uv_layer]
         corners.append(luv)
     
-    if len(corners) is not 4: 
+    if len(corners) != 4: 
         #operator.report({'ERROR'}, "bla")
         return
     
@@ -247,7 +247,7 @@ def MakeUvFaceEqualRectangle(vertsDict, lucv, rucv, rdcv, ldcv, startv, square =
 
 def SnapCursorToClosestSelected(filteredVerts):
     #TODO: snap to closest selected 
-    if len(filteredVerts) is 1: 
+    if len(filteredVerts) == 1: 
         SetAll2dCursorsTo(filteredVerts[0].uv.x, filteredVerts[0].uv.y)
     
     return
@@ -275,7 +275,7 @@ def ListsOfVerts(uv_layer, bm):
         
         allEdgeVerts.extend(facesEdgeVerts)
         if isFaceSel:            
-            if len(f.verts) is not 4:
+            if len(f.verts) != 4:
                 nonQuadFaces.append(f)
                 edgeVerts.extend(facesEdgeVerts)
             else: 
@@ -290,11 +290,11 @@ def ListsOfVerts(uv_layer, bm):
         else: edgeVerts.extend(facesEdgeVerts)
     
     noEdge = False
-    if len(edgeVerts) is 0:
+    if len(edgeVerts) == 0:
         noEdge = True
         edgeVerts.extend(allEdgeVerts)
     
-    if len(selFaces) is 0:
+    if len(selFaces) == 0:
         for ev in edgeVerts:
             if ListQuasiContainsVect(filteredVerts, ev) is False:
                 filteredVerts.append(ev)
@@ -637,7 +637,7 @@ def ScaleTo0(axis):
     
     for area in bpy.context.screen.areas:
         if area.type == 'IMAGE_EDITOR':
-            if axis is 'Y':
+            if axis == 'Y':
                 bpy.ops.transform.resize(value=(1, 0, 1), constraint_axis=(False, True, False), mirror=False, proportional_edit_falloff='SMOOTH', proportional_size=1)
             else:
                 bpy.ops.transform.resize(value=(0, 1, 1), constraint_axis=(True, False, False), mirror=False, proportional_edit_falloff='SMOOTH', proportional_size=1)
@@ -688,7 +688,7 @@ def ImageSize():
     for a in bpy.context.screen.areas:
         if a.type == 'IMAGE_EDITOR':
             img = a.spaces[0].image
-            if img is not None and img.size[0] is not 0:
+            if img is not None and img.size[0] == not 0:
                 ratioX, ratioY = img.size[0], img.size[1]
             break
     return ratioX, ratioY
@@ -767,7 +767,7 @@ def RipUvFaces(context, operator):
         if isFaceSel is True:
             selFaces.append(f)
     
-    if len(selFaces) is 0:
+    if len(selFaces) == 0:
         target = None
         for f in bm.faces:
             for l in f.loops:
@@ -831,7 +831,7 @@ def JoinUvFaces(context, operator):
                         minV = luv
                         minV.select = True
         
-            if min is not 1:
+            if min != 1:
                 for v in vertsDict[(key[0], key[1])]:
                     v = v.uv
                     v.x = minV.uv.x
