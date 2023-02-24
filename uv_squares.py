@@ -41,7 +41,6 @@ precision = 3
 def main(context, operator, square=False, snap_to_closest=False):
     if context.scene.tool_settings.use_uv_select_sync:
         operator.report({'ERROR'}, "Please disable 'Keep UV and edit mesh in sync'")
-        # context.scene.tool_settings.use_uv_select_sync = False
         return
 
     selected_objects = context.selected_objects
@@ -56,7 +55,6 @@ def main(context, operator, square=False, snap_to_closest=False):
 def main1(obj, context, operator, square, snap_to_closest):
     if context.scene.tool_settings.use_uv_select_sync:
         operator.report({'ERROR'}, "Please disable 'Keep UV and edit mesh in sync'")
-        # context.scene.tool_settings.use_uv_select_sync = False
         return
 
     start_time = timer()
@@ -129,12 +127,12 @@ def main1(obj, context, operator, square, snap_to_closest):
     islands = get_islands_from_selected_faces(sel_faces)
 
     def main2(target_face, faces):
-        shape_face(uv_layer, operator, target_face, verts_dict, square)
+        shape_face(uv_layer, target_face, verts_dict, square)
 
         if square:
-            follow_active_uv(operator, me, target_face, faces, 'EVEN')
+            follow_active_uv(me, target_face, faces, 'EVEN')
         else:
-            follow_active_uv(operator, me, target_face, faces)
+            follow_active_uv(me, target_face, faces)
 
     for island in islands:
         target_face = bm.faces.active
@@ -158,15 +156,7 @@ def main1(obj, context, operator, square, snap_to_closest):
     return success_finished(me, start_time)
 
 
-'''def ScaleSelection(factor, pivot = 'CURSOR'):
-    last_pivot = bpy.context.space_data.pivot_point
-    bpy.context.space_data.pivot_point = pivot
-    bpy.ops.transform.resize(value=(factor, factor, factor), constraint_axis=(False, False, False), mirror=False, proportional_edit_falloff='SMOOTH', proportional_size=1)
-    bpy.context.space_data.pivot_point = last_pivot
-    return'''
-
-
-def shape_face(uv_layer, operator, target_face, verts_dict, square):
+def shape_face(uv_layer, target_face, verts_dict, square):
     corners = []
     for l in target_face.loops:
         luv = l[uv_layer]
@@ -322,7 +312,7 @@ def list_quasi_contains_vect(list, vect):
 
 
 # modified ideasman42's uvcalc_follow_active.py
-def follow_active_uv(operator, me, f_act, faces, extend_mode='LENGTH_AVERAGE'):
+def follow_active_uv(me, f_act, faces, extend_mode='LENGTH_AVERAGE'):
     bm = bmesh.from_edit_mesh(me)
     uv_act = bm.loops.layers.uv.active
 
@@ -497,21 +487,10 @@ def follow_active_uv(operator, me, f_act, faces, extend_mode='LENGTH_AVERAGE'):
 
 
 def success_finished(me, start_time):
-    # use for backtrack of steps
-    # bpy.ops.ed.undo_push()
     bmesh.update_edit_mesh(me)
     elapsed = round(timer() - start_time, 2)
-    # if (elapsed >= 0.05): operator.report({'INFO'}, "UvSquares finished, elapsed:", elapsed, "s.")
     if elapsed >= 0.05:
         print("UvSquares finished, elapsed:", elapsed, "s.")
-
-
-'''def SymmetrySelected(axis, pivot = "MEDIAN"):
-    last_pivot = bpy.context.space_data.pivot_point
-    bpy.context.space_data.pivot_point = pivot
-    bpy.ops.transform.mirror(constraint_axis=(True, False, False), constraint_orientation='GLOBAL', proportional_edit_falloff='SMOOTH', proportional_size=1)
-    bpy.context.space_data.pivot_point = last_pivot
-    return'''
 
 
 def are_vects_lined_on_axis(verts):
@@ -737,34 +716,13 @@ def set_all_2d_cursors_to(x, y):
     bpy.context.area.type = last_area
 
 
-'''def RotateSelected(angle, pivot = None):
-    if pivot is None:
-        pivot = "MEDIAN"
-   
-    last_area = bpy.context.area.type
-    bpy.context.area.type = 'IMAGE_EDITOR'
-    
-    last_pivot = bpy.context.space_data.pivot_point
-    bpy.context.space_data.pivot_point = pivot
-    
-    for area in bpy.context.screen.areas:
-        if area.type == 'IMAGE_EDITOR':
-            bpy.ops.transform.rotate(value=radians(angle), axis=(-0, -0, -1), constraint_axis=(False, False, False), constraint_orientation='LOCAL', mirror=False, proportional_edit_falloff='SMOOTH', proportional_size=1)
-            break
-
-    bpy.context.space_data.pivot_point = last_pivot
-    bpy.context.area.type = last_area
-    
-    return'''
-
-
 def are_verts_quasi_equal(v1, v2, allowed_error=0.00001):
     if abs(v1.uv.x - v2.uv.x) < allowed_error and abs(v1.uv.y - v2.uv.y) < allowed_error:
         return True
     return False
 
 
-def rip_uv_faces(context, operator):
+def rip_uv_faces(context,):
     start_time = timer()
 
     obj = context.active_object
@@ -907,7 +865,7 @@ class UV_PT_RipFaces(bpy.types.Operator):
         return (context.mode == 'EDIT_MESH')
 
     def execute(self, context):
-        rip_uv_faces(context, self)
+        rip_uv_faces(context)
         return {'FINISHED'}
 
 
