@@ -45,11 +45,11 @@ def main(context, operator, square=False, snap_to_closest=False):
         return
 
     selected_objects = context.selected_objects
-    if (context.edit_object not in selected_objects):
+    if context.edit_object not in selected_objects:
         selected_objects.append(context.edit_object)
 
     for obj in selected_objects:
-        if (obj.type == "MESH"):
+        if obj.type == "MESH":
             main1(obj, context, operator, square, snap_to_closest)
 
 
@@ -1033,15 +1033,16 @@ def register():
     wm = bpy.context.window_manager
 
     if (wm.keyconfigs.addon):
-        km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
+        km_name = 'UV Editor'
+        km = wm.keyconfigs.addon.keymaps.new(name=km_name, space_type='EMPTY')
         kmi = km.keymap_items.new(UV_PT_UvSquaresByShape.bl_idname, 'E', 'PRESS', alt=True)
         addon_keymaps.append((km, kmi))
 
-        km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
+        km = wm.keyconfigs.addon.keymaps.new(name=km_name, space_type='EMPTY')
         kmi = km.keymap_items.new(UV_PT_RipFaces.bl_idname, 'V', 'PRESS', alt=True)
         addon_keymaps.append((km, kmi))
 
-        km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
+        km = wm.keyconfigs.addon.keymaps.new(name=km_name, space_type='EMPTY')
         kmi = km.keymap_items.new(UV_PT_JoinFaces.bl_idname, 'V', 'PRESS', alt=True, shift=True)
         addon_keymaps.append((km, kmi))
 
