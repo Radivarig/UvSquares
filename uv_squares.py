@@ -932,7 +932,6 @@ addon_keymaps = []
 
 def menu_func_uv_squares(self, context): self.layout.operator(UV_PT_UvSquares.bl_idname)
 def menu_func_uv_squares_by_shape(self, context): self.layout.operator(UV_PT_UvSquaresByShape.bl_idname)
-def menu_func_face_rip(self, context): self.layout.operator(UV_PT_RipFaces.bl_idname)
 def menu_func_face_join(self, context): self.layout.operator(UV_PT_JoinFaces.bl_idname)
 
 class UV_PT_UvSquaresPanel(bpy.types.Panel):
@@ -970,17 +969,13 @@ class UV_PT_UvSquaresPanel(bpy.types.Panel):
         col = split.column(align=True)
         row = col.row(align=True)
 
-        row.operator(UV_PT_RipFaces.bl_idname, text="Rip Vertex", icon = "LAYER_ACTIVE")
-        row.operator(UV_PT_RipFaces.bl_idname, text="Rip Faces", icon = "UV_ISLANDSEL")
         col.operator(UV_PT_JoinFaces.bl_idname, text="Snap to Closest Unselected", icon = "SNAP_GRID")
         row = layout.row()
-        row.label(text="V - Join (Stitch), I -Toggle Islands")
 
 def register():
     bpy.utils.register_class(UV_PT_UvSquaresPanel)
     bpy.utils.register_class(UV_PT_UvSquares)
     bpy.utils.register_class(UV_PT_UvSquaresByShape)
-    bpy.utils.register_class(UV_PT_RipFaces)
     bpy.utils.register_class(UV_PT_JoinFaces)
     bpy.utils.register_class(UV_PT_SnapToAxis)
     bpy.utils.register_class(UV_PT_SnapToAxisWithEqual)
@@ -988,37 +983,30 @@ def register():
     #menu
     bpy.types.IMAGE_MT_uvs.append(menu_func_uv_squares)
     bpy.types.IMAGE_MT_uvs.append(menu_func_uv_squares_by_shape)
-    bpy.types.IMAGE_MT_uvs.append(menu_func_face_rip)
     bpy.types.IMAGE_MT_uvs.append(menu_func_face_join)
 
     #handle the keymap
     wm = bpy.context.window_manager
 
+    shortcut = {'key': 'E', 'alt': True, 'ctrl': False, 'shift': False}
+
+    # TODO: skip adding if keymap already exists in UV Editor context
     if (wm.keyconfigs.addon):
         km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
-        kmi = km.keymap_items.new(UV_PT_UvSquaresByShape.bl_idname, 'E', 'PRESS', alt=True)
-        addon_keymaps.append((km, kmi))
-
-        km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
-        kmi = km.keymap_items.new(UV_PT_RipFaces.bl_idname, 'V', 'PRESS', alt=True)
-        addon_keymaps.append((km, kmi))
-
-        km = wm.keyconfigs.addon.keymaps.new(name='UV Editor', space_type='EMPTY')
-        kmi = km.keymap_items.new(UV_PT_JoinFaces.bl_idname, 'V', 'PRESS', alt=True, shift=True)
+        kmi = km.keymap_items.new(UV_PT_UvSquaresByShape.bl_idname,
+            shortcut['key'], 'PRESS', alt=shortcut['alt'], ctrl=shortcut['ctrl'], shift=shortcut['shift'])
         addon_keymaps.append((km, kmi))
 
 def unregister():
     bpy.utils.unregister_class(UV_PT_UvSquaresPanel)
     bpy.utils.unregister_class(UV_PT_UvSquares)
     bpy.utils.unregister_class(UV_PT_UvSquaresByShape)
-    bpy.utils.unregister_class(UV_PT_RipFaces)
     bpy.utils.unregister_class(UV_PT_JoinFaces)
     bpy.utils.unregister_class(UV_PT_SnapToAxis)
     bpy.utils.unregister_class(UV_PT_SnapToAxisWithEqual)
 
     bpy.types.IMAGE_MT_uvs.remove(menu_func_uv_squares)
     bpy.types.IMAGE_MT_uvs.remove(menu_func_uv_squares_by_shape)
-    bpy.types.IMAGE_MT_uvs.remove(menu_func_face_rip)
     bpy.types.IMAGE_MT_uvs.remove(menu_func_face_join)
 
     # handle the keymap
