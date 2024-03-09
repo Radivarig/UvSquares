@@ -1,17 +1,20 @@
-Uv Squares
-==
-Blender's UV Editor tool that reshapes UV quad selection into grid.
+# UV Squares
+Blender's UV Editor tool that reshapes UV quad selection into a grid.
 
-Installation
---
+## Installation
 Go to `Edit > Preferences > Addons > Install` and either select .zip file or the unzipped `uv_squares.py` file.
 
-Location
---
+## Location
 `UV Editor > N Panel > UV Squares`
 
-Features
---
+## Support
+If you need help with the addon or you want to support me back please do so over BlenderMarket ❤️:
+https://blendermarket.com/products/uv-squares
+
+## Affiliates
+If you are advertising the addon through a blog/course/video please contact me and I will give you a percent of the sales!
+
+## Features
 * Reshape selected UV faces (quads) to **grid** of either:
     * equivalent **squares** (each square area is the same)
     * or by respect to **shape** of an active quad (area of rectangles can differ but they fit into straight lines)
@@ -21,12 +24,10 @@ Features
 * Join selected faces/vertices to closest unselected vertices
 * Select single vertex and snap 2d cursor to it
 
-Shortcut:
---
+## Shortcut
 * **Grid**/**Align**: **Alt + E**
 
-Notes
---
+## Notes
 **Aligning to axis**
 * All vertices have to be ordered/sequenced by x/y value depending of X/Y axis that they are getting aligned to. Otherwise you will have swapped vertices in the result.
 * What script does here:
@@ -45,12 +46,5 @@ Notes
     * For faces, if you want to connect islands back to their original place:
      - use stitch (shortcut: Alt V, while stitching press I to toggle island)
 
-Development
+## Development
 * When bumping versions increment both `bl_info` objects, one in `__init__.py` which is used for .zip install, and another in the main `uv_squares.py` file.
-
-Support
-If you need help with the addon or you want to support me back please do so over BlenderMarket ♥:
-https://blendermarket.com/products/uv-squares
-
-Affiliates
-If you are advertising the addon through a blog/course/video please contact me and I will give you a percent of the sales!
