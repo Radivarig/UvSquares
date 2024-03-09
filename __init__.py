@@ -15,13 +15,13 @@
 
 bl_info = {
     "name": "UV Squares",
-    "description": "UV Editor tool for reshaping selection to grid.",
+    "description": "UV Editor tool for reshaping quad selection to grid.",
     "author": "Reslav Hollos",
     "version": (1, 14, 2),
     "blender": (2, 80, 0),
     "location": "UV Editor > N Panel > UV Squares",
     "category": "UV",
-    "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/Scripts/UV/Uv_Squares"
+    "wiki_url": "https://blendermarket.com/products/uv-squares"
 }
 
 from .uv_squares import *

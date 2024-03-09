@@ -15,13 +15,13 @@
 
 bl_info = {
     "name": "UV Squares",
-    "description": "UV Editor tool for reshaping selection to grid.",
+    "description": "UV Editor tool for reshaping quad selection to grid.",
     "author": "Reslav Hollos",
     "version": (1, 14, 2),
     "blender": (2, 80, 0),
     "location": "UV Editor > N Panel > UV Squares",
     "category": "UV",
-    "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/Scripts/UV/Uv_Squares"
+    "wiki_url": "https://blendermarket.com/products/uv-squares"
 }
 
 import bpy
@@ -886,9 +886,9 @@ class UV_PT_RipFaces(bpy.types.Operator):
         return {'FINISHED'}
 
 class UV_PT_JoinFaces(bpy.types.Operator):
-    """Join selected UV faces to closest nonselected vertices"""
+    """Join selection to closest nonselected vertices (has to be very close)"""
     bl_idname = "uv.uv_face_join"
-    bl_label = "UV face join"
+    bl_label = "UV selection join to closest unselected"
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
