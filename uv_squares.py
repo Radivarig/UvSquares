@@ -17,7 +17,7 @@ bl_info = {
     "name": "UV Squares",
     "description": "UV Editor tool for reshaping quad selection to grid.",
     "author": "Reslav Hollos",
-    "version": (1, 15, 0),
+    "version": (1, 16, 0),
     "blender": (2, 80, 0),
     "location": "UV Editor > N Panel > UV Squares",
     "category": "UV",
@@ -630,8 +630,6 @@ def ScaleTo0OnAxisAndCursor(filteredVerts, vertsDict, startv = None, horizontal 
         return
 
 def ScaleTo0(axis):
-    last_area = bpy.context.area.type
-    bpy.context.area.type = 'IMAGE_EDITOR'
     last_pivot = bpy.context.space_data.pivot_point
     bpy.context.space_data.pivot_point = 'CURSOR'
 
@@ -711,33 +709,8 @@ def CursorClosestTo(verts):
     return minV
 
 def SetAll2dCursorsTo(x,y):
-    last_area = bpy.context.area.type
-    bpy.context.area.type = 'IMAGE_EDITOR'
-
     bpy.ops.uv.cursor_set(location=(x, y))
-
-    bpy.context.area.type = last_area
     return
-
-'''def RotateSelected(angle, pivot = None):
-    if pivot == None:
-        pivot = "MEDIAN"
-
-    last_area = bpy.context.area.type
-    bpy.context.area.type = 'IMAGE_EDITOR'
-
-    last_pivot = bpy.context.space_data.pivot_point
-    bpy.context.space_data.pivot_point = pivot
-
-    for area in bpy.context.screen.areas:
-        if area.type == 'IMAGE_EDITOR':
-            bpy.ops.transform.rotate(value=radians(angle), axis=(-0, -0, -1), constraint_axis=(False, False, False), constraint_orientation='LOCAL', mirror=False, proportional_edit_falloff='SMOOTH', proportional_size=1)
-            break
-
-    bpy.context.space_data.pivot_point = last_pivot
-    bpy.context.area.type = last_area
-
-    return'''
 
 def AreVertsQuasiEqual(v1, v2, allowedError = 0.00001):
     if abs(v1.uv.x -v2.uv.x) < allowedError and abs(v1.uv.y -v2.uv.y) < allowedError:
