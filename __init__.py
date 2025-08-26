@@ -17,7 +17,7 @@ bl_info = {
     "name": "UV Squares",
     "description": "UV Editor tool for reshaping quad selection to grid.",
     "author": "Reslav Hollos",
-    "version": (1, 15, 0),
+    "version": (1, 16, 0),
     "blender": (2, 80, 0),
     "location": "UV Editor > N Panel > UV Squares",
     "category": "UV",
